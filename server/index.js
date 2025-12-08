@@ -24,6 +24,7 @@ const { startPrescriptionCron } = require("./config/prescriptionJob.js");
 const adminRoute = require('./routes/admin.route');
 const emergencyRoute = require('./routes/emergency.route');
 const governmentDoctorsRoute = require('./routes/governmentDoctors.route');
+const ambulanceServiceRoute = require('./routes/ambulanceService.route');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -82,6 +83,7 @@ app.use("/api/pharmacyBill", pharmacyBillRoute);
 app.use('/api/admin', adminRoute);
 app.use('/api/emergency', emergencyRoute);
 app.use('/api/government-doctors', governmentDoctorsRoute);
+app.use('/api/ambulance-service', ambulanceServiceRoute);
 
 app.get("/", (req, res) => {
     res.send("API is running!");

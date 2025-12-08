@@ -142,7 +142,7 @@ const SymptomCheckerContent = () => {
                 loading: "AI is analyzing your symptoms...",
                 success: (data) =>
                     `Analysis complete! Found ${data.possibleDiseases?.length || 0
-                    } possible conditions.`,
+                    } possible condition${data.possibleDiseases?.length !== 1 ? 's' : ''}.`,
                 error: () => `Failed to analyze symptoms.`,
             }
         );

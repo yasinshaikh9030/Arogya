@@ -38,10 +38,10 @@ const EmergencyAppointmentForm = ({
         e.preventDefault();
 
         // Validation
-        if (!formData.phone || !formData.fullName) {
-            toast.error("Please fill in all required fields");
-            return;
-        }
+        // if (!formData.phone || !formData.fullName) {
+        //     toast.error("Please fill in all required fields");
+        //     return;
+        // }
 
         if (
             !formData.phone.match(
@@ -58,7 +58,7 @@ const EmergencyAppointmentForm = ({
 
             // Gather required appointment data for emergency API
             const appointmentData = {
-                fullName: formData.fullName,
+                // fullName: formData.fullName,
                 phone: formData.phone,
                 location: {
                     latitude: userLocation?.latitude || null,
@@ -79,7 +79,7 @@ const EmergencyAppointmentForm = ({
 
             if (response.data.success) {
                 toast.success(
-                    "Emergency appointment request submitted successfully! A doctor will contact you shortly."
+                    "Location has been shared, Doctor will get back to you"
                 );
                 onClose();
                 // Reset form
@@ -108,7 +108,7 @@ const EmergencyAppointmentForm = ({
 
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4">
-            <div className="bg-white dark:bg-dark-surface rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-white dark:bg-dark-surface rounded-2xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
                 {/* Header */}
                 <div className="sticky top-0 bg-red-600 text-white p-6 rounded-t-2xl flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -128,12 +128,12 @@ const EmergencyAppointmentForm = ({
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     {/* Patient Information */}
                     <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                        {/* <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                             <User className="w-5 h-5" />
                             Patient Information
-                        </h3>
+                        </h3> */}
 
-                        <div>
+                        {/* <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Full Name{" "}
                                 <span className="text-red-500">*</span>
@@ -147,7 +147,7 @@ const EmergencyAppointmentForm = ({
                                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent dark:bg-dark-bg dark:text-white"
                                 placeholder="Enter your full name"
                             />
-                        </div>
+                        </div> */}
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -168,12 +168,6 @@ const EmergencyAppointmentForm = ({
 
                     {/* Submit Button */}
                     <div className="flex gap-3 pt-4">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-bg transition">
-                            Cancel
-                        </button>
                         <button
                             type="submit"
                             disabled={loading}
