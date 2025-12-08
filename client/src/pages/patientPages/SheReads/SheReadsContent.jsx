@@ -441,11 +441,10 @@ const SheReadsContent = () => {
                     <button
                         key={cat}
                         onClick={() => setActiveCategory(cat)}
-                        className={`px-3 py-2 rounded-xl text-sm whitespace-nowrap border border-black/5 dark:border-white/5 ${
-                            activeCategory === cat
-                                ? "bg-light-primary dark:bg-dark-primary text-white"
-                                : "bg-light-surface dark:bg-dark-bg text-light-secondary-text dark:text-dark-secondary-text"
-                        }`}
+                        className={`px-3 py-2 rounded-xl text-sm whitespace-nowrap border border-black/5 dark:border-white/5 ${activeCategory === cat
+                            ? "bg-light-primary dark:bg-dark-primary text-white"
+                            : "bg-light-surface dark:bg-dark-bg text-light-secondary-text dark:text-dark-secondary-text"
+                            }`}
                         aria-pressed={activeCategory === cat}>
                         {cat}
                     </button>
@@ -453,7 +452,7 @@ const SheReadsContent = () => {
             </div>
 
             <div
-                className="grid grid-cols-3 gap-3 sm:gap-4"
+                className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4"
                 role="listbox"
                 aria-label="Disease list">
                 {filtered.map((item) => {
@@ -465,32 +464,30 @@ const SheReadsContent = () => {
                             role="option"
                             aria-selected={isActive}
                             onClick={() => setSelectedId(item.id)}
-                            className={`text-left rounded-2xl overflow-hidden flex flex-col  border shadow-sm transition-colors ${
-                                isActive
-                                    ? "bg-light-primary/30 dark:bg-dark-primary/30 text-light-primary-text dark:text-dark-primary-text border-transparent"
-                                    : "bg-light-surface dark:bg-dark-bg text-light-primary-text dark:text-dark-primary-text border-black/5 dark:border-white/5"
-                            }`}>
+                            className={`text-left rounded-2xl overflow-hidden flex flex-col h-full border shadow-sm transition-colors ${isActive
+                                ? "bg-light-primary/30 dark:bg-dark-primary/30 text-light-primary-text dark:text-dark-primary-text border-transparent"
+                                : "bg-light-surface dark:bg-dark-bg text-light-primary-text dark:text-dark-primary-text border-black/5 dark:border-white/5"
+                                }`}>
                             <div className="relative w-full pt-[75%] overflow-hidden">
                                 <img
                                     src={item.image}
                                     alt={item.name}
-                                    className={`absolute top-0 left-0 w-full h-full object-cover object-center ${
-                                        isActive ? "opacity-90" : "opacity-100"
-                                    }`}
+                                    className={`absolute top-0 left-0 w-full h-full object-cover object-center ${isActive ? "opacity-90" : "opacity-100"
+                                        }`}
                                     loading="lazy"
                                 />
                             </div>
-                            <div className="p-3 sm:p-4 flex items-start gap-2">
+                            <div className="flex-1 p-2 sm:p-3 flex items-start gap-2">
                                 <span
-                                    className="text-xl sm:text-2xl"
+                                    className="text-lg sm:text-xl"
                                     aria-hidden>
                                     {icon}
                                 </span>
-                                <div>
-                                    <div className="text-xs text-light-primary-text/80 dark:text-dark-primary-text/80">
+                                <div className="min-w-0">
+                                    <div className="text-[10px] sm:text-xs text-light-primary-text/80 dark:text-dark-primary-text/80">
                                         {item.category}
                                     </div>
-                                    <div className="text-base font-medium line-clamp-2">
+                                    <div className="text-xs sm:text-sm md:text-base font-medium leading-snug line-clamp-3">
                                         {item.name}
                                     </div>
                                 </div>

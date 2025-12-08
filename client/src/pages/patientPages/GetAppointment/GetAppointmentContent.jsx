@@ -43,15 +43,15 @@ function buildDiagnosisPrompt(userMeta = {}, symptoms = [], id = "") {
         Array.isArray(arr) && arr.length ? arr.join(", ") : "None";
     const dobOrAge = userMeta.dob
         ? `${userMeta.dob} (age: ${Math.max(
-              0,
-              Math.floor(
-                  (Date.now() - new Date(userMeta.dob)) /
-                      (365.25 * 24 * 60 * 60 * 1000)
-              )
-          )})`
+            0,
+            Math.floor(
+                (Date.now() - new Date(userMeta.dob)) /
+                (365.25 * 24 * 60 * 60 * 1000)
+            )
+        )})`
         : userMeta.age
-        ? `${userMeta.age} years`
-        : "N/A";
+            ? `${userMeta.age} years`
+            : "N/A";
 
     const patientBlock = [
         `Name: ${userMeta.fullName || "N/A"}`,
@@ -134,8 +134,7 @@ const GetAppointmentContent = () => {
                 setLoading(true);
                 const token = await getToken();
                 const res = await axios.get(
-                    `${
-                        import.meta.env.VITE_SERVER_URL
+                    `${import.meta.env.VITE_SERVER_URL
                     }/api/doctor/verified-doctors`,
                     {
                         headers: { Authorization: `Bearer ${token}` },
@@ -210,8 +209,7 @@ const GetAppointmentContent = () => {
                         appointmentForm.symptoms
                     );
                     const summary = await axios.get(
-                        `${
-                            import.meta.env.VITE_SERVER_URL
+                        `${import.meta.env.VITE_SERVER_URL
                         }/api/ai/generate-questions`,
                         {
                             params: { prompt },
@@ -241,17 +239,16 @@ const GetAppointmentContent = () => {
 
                     const token = await getToken();
                     const res = await axios.post(
-                        `${
-                            import.meta.env.VITE_SERVER_URL
+                        `${import.meta.env.VITE_SERVER_URL
                         }/api/appointment/create-appointment`,
                         formData,
                         token
                             ? {
-                                  headers: {
-                                      Authorization: `Bearer ${token}`,
-                                      "Content-Type": "multipart/form-data",
-                                  },
-                              }
+                                headers: {
+                                    Authorization: `Bearer ${token}`,
+                                    "Content-Type": "multipart/form-data",
+                                },
+                            }
                             : undefined
                     );
                     closeBookingModal();
@@ -273,8 +270,7 @@ const GetAppointmentContent = () => {
                             }));
                             const token2 = await getToken();
                             const res2 = await axios.get(
-                                `${
-                                    import.meta.env.VITE_SERVER_URL
+                                `${import.meta.env.VITE_SERVER_URL
                                 }/api/doctor/${selectedDoctor._id}/slots`,
                                 {
                                     params: { date: appointmentForm.date },
@@ -341,8 +337,7 @@ const GetAppointmentContent = () => {
                 setLoadingSlots(true);
                 const token = await getToken();
                 const res = await axios.get(
-                    `${import.meta.env.VITE_SERVER_URL}/api/doctor/${
-                        selectedDoctor._id
+                    `${import.meta.env.VITE_SERVER_URL}/api/doctor/${selectedDoctor._id
                     }/slots`,
                     {
                         params: { date: value },
@@ -373,8 +368,7 @@ const GetAppointmentContent = () => {
             try {
                 const token = await getToken();
                 const res = await axios.get(
-                    `${import.meta.env.VITE_SERVER_URL}/api/doctor/${
-                        selectedDoctor._id
+                    `${import.meta.env.VITE_SERVER_URL}/api/doctor/${selectedDoctor._id
                     }/slots`,
                     {
                         params: { date: appointmentForm.date },
@@ -384,7 +378,7 @@ const GetAppointmentContent = () => {
                     }
                 );
                 if (!cancelled) setAvailableSlots(res.data?.data || []);
-            } catch (_) {}
+            } catch (_) { }
         };
         // initial fetch to sync
         tick();
@@ -435,12 +429,12 @@ const GetAppointmentContent = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-light-background to-light-background-secondary dark:from-dark-background dark:to-dark-background-secondary">
-            <div className="max-w-7xl mx-auto p-6">
-                <div className="mb-6">
-                    <h1 className="text-3xl font-bold text-light-primary-text dark:text-dark-primary-text">
+            <div className="max-w-4xl mx-auto px-4 py-4 sm:px-6 sm:py-6">
+                <div className="mb-4 sm:mb-6">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-light-primary-text dark:text-dark-primary-text">
                         Find a Verified Doctor
                     </h1>
-                    <p className="text-light-secondary-text dark:text-dark-secondary-text">
+                    <p className="mt-1 text-sm sm:text-base text-light-secondary-text dark:text-dark-secondary-text">
                         All doctors listed below are identity-verified and
                         available for appointments.
                     </p>
@@ -456,17 +450,17 @@ const GetAppointmentContent = () => {
                                     <div className="w-full aspect-square rounded-full bg-gradient-to-br from-light-primary/20 to-light-primary/10 dark:from-dark-primary/20 dark:to-dark-primary/10 flex items-center justify-center text-xl font-semibold text-light-primary dark:text-dark-primary">
                                         {doc.fullName
                                             ? doc.fullName
-                                                  .split(" ")
-                                                  .map((n) => n[0])
-                                                  .slice(0, 2)
-                                                  .join("")
+                                                .split(" ")
+                                                .map((n) => n[0])
+                                                .slice(0, 2)
+                                                .join("")
                                             : "DR"}
                                     </div>
                                 </div>
 
                                 <div className="col-span-5">
                                     <div className="flex items-center gap-2">
-                                        <h3 className="text-lg font-semibold text-light-primary-text dark:text-dark-primary-text">
+                                        <h3 className="text-base sm:text-lg font-semibold text-light-primary-text dark:text-dark-primary-text">
                                             Dr. {doc.fullName}
                                         </h3>
                                         {doc.specialty && (
@@ -475,7 +469,7 @@ const GetAppointmentContent = () => {
                                             </span>
                                         )}
                                     </div>
-                                    <p className="text-sm text-[var(--color-light-secondary-text)] dark:text-[var(--color-dark-secondary-text)] mt-1">
+                                    <p className="text-xs sm:text-sm text-[var(--color-light-secondary-text)] dark:text-[var(--color-dark-secondary-text)] mt-1">
                                         {doc.bio
                                             ? doc.bio.length > 120
                                                 ? doc.bio.slice(0, 120) + "..."
@@ -484,7 +478,7 @@ const GetAppointmentContent = () => {
                                     </p>
 
                                     <div className="mt-3 flex items-center gap-2 flex-wrap">
-                                        <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full dark:text-yellow-300 text-sm">
+                                        <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full dark:text-yellow-300 text-xs sm:text-sm">
                                             <Star
                                                 className="fill-amber-400"
                                                 size={28}
@@ -502,7 +496,7 @@ const GetAppointmentContent = () => {
                                             </div>
                                         </div>
 
-                                        <div className="text-sm text-light-secondary-text bg-light-bg dark:bg-dark-surface px-3 py-1 rounded-full dark:text-dark-secondary-text">
+                                        <div className="text-xs sm:text-sm text-light-secondary-text bg-light-bg dark:bg-dark-surface px-3 py-1 rounded-full dark:text-dark-secondary-text">
                                             {doc.experience
                                                 ? `${doc.experience} yrs`
                                                 : "N/A"}{" "}
@@ -523,7 +517,7 @@ const GetAppointmentContent = () => {
 
                                 <div className="col-span-2 h-full flex flex-col justify-between gap-3">
                                     <div className="text-right">
-                                        <div className="text-2xl font-semibold text-light-primary-text dark:text-dark-primary-text">
+                                        <div className="text-xl sm:text-2xl font-semibold text-light-primary-text dark:text-dark-primary-text">
                                             ₹{doc.consultationFee ?? 0}
                                         </div>
                                         <div className="text-xs text-light-secondary-text dark:text-dark-secondary-text">
@@ -618,16 +612,14 @@ const GetAppointmentContent = () => {
                                                                     })
                                                                 )
                                                             }
-                                                            className={`px-3 py-2 rounded-md text-sm border transition ${
-                                                                appointmentForm.time ===
+                                                            className={`px-3 py-2 rounded-md text-sm border transition ${appointmentForm.time ===
                                                                 s
-                                                                    ? "bg-light-primary text-white border-light-primary"
-                                                                    : "bg-light-bg dark:bg-dark-surface text-light-primary-text dark:text-dark-primary-text border-light-secondary-text/20 dark:border-dark-secondary-text/20"
-                                                            } ${
-                                                                isBooking
+                                                                ? "bg-light-primary text-white border-light-primary"
+                                                                : "bg-light-bg dark:bg-dark-surface text-light-primary-text dark:text-dark-primary-text border-light-secondary-text/20 dark:border-dark-secondary-text/20"
+                                                                } ${isBooking
                                                                     ? "opacity-60 cursor-not-allowed"
                                                                     : "hover:opacity-90"
-                                                            }`}>
+                                                                }`}>
                                                             {s}
                                                         </button>
                                                     ))}
@@ -664,11 +656,10 @@ const GetAppointmentContent = () => {
                                                         type
                                                     )
                                                 }
-                                                className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold capitalize transition ${
-                                                    selected
-                                                        ? "border-transparent bg-light-primary text-white dark:bg-dark-primary"
-                                                        : "border-light-secondary-text/30 dark:border-dark-secondary-text/30 text-light-primary-text dark:text-dark-primary-text"
-                                                }`}>
+                                                className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold capitalize transition ${selected
+                                                    ? "border-transparent bg-light-primary text-white dark:bg-dark-primary"
+                                                    : "border-light-secondary-text/30 dark:border-dark-secondary-text/30 text-light-primary-text dark:text-dark-primary-text"
+                                                    }`}>
                                                 {type}
                                             </button>
                                         );
@@ -696,20 +687,19 @@ const GetAppointmentContent = () => {
                                                     active
                                                         ? removeSymptom(symptom)
                                                         : setAppointmentForm(
-                                                              (prev) => ({
-                                                                  ...prev,
-                                                                  symptoms: [
-                                                                      ...prev.symptoms,
-                                                                      symptom,
-                                                                  ],
-                                                              })
-                                                          )
+                                                            (prev) => ({
+                                                                ...prev,
+                                                                symptoms: [
+                                                                    ...prev.symptoms,
+                                                                    symptom,
+                                                                ],
+                                                            })
+                                                        )
                                                 }
-                                                className={`rounded-full px-3 py-1 text-sm capitalize transition ${
-                                                    active
-                                                        ? "bg-light-primary text-white dark:bg-dark-primary"
-                                                        : "bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary"
-                                                }`}>
+                                                className={`rounded-full px-3 py-1 text-sm capitalize transition ${active
+                                                    ? "bg-light-primary text-white dark:bg-dark-primary"
+                                                    : "bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary"
+                                                    }`}>
                                                 {symptom}
                                             </button>
                                         );

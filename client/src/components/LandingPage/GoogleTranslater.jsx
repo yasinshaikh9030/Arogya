@@ -10,7 +10,7 @@ export default function GoogleTranslater() {
     const scriptLoadedRef = useRef(false);
     const widgetMountedRef = useRef(false);
 
-    const {user} = useUser();
+    const { user } = useUser();
     const { getToken } = useAuth();
     const userId = user?.id;
 
@@ -101,16 +101,17 @@ export default function GoogleTranslater() {
     };
 
     return (
-        <div ref={wrapperRef} className="relative flex justify-center">
+        <div ref={wrapperRef} className="relative flex items-center">
             <button
                 onClick={() => setOpen(!open)}
-                className="cursor-pointer text-sm font-semibold text-light-primary-text dark:text-dark-primary-text"
+                className="cursor-pointer inline-flex items-center gap-2 text-sm font-semibold text-light-primary-text dark:text-dark-primary-text"
             >
-                <Languages />
+                <span>Language</span>
+                <Languages className="w-4 h-4" />
             </button>
 
             {open && (
-                <div className="absolute right-0 mt-6 p-3 bg-light-surface dark:bg-dark-surface rounded-2xl shadow-lg min-w-[220px] z-50 border border-light-primary/15 dark:border-dark-primary/15">
+                <div className="absolute right-0 top-full mt-2 p-3 bg-light-surface dark:bg-dark-surface rounded-2xl shadow-lg min-w-[220px] max-h-72 overflow-y-auto z-[60] border border-light-primary/15 dark:border-dark-primary/15">
                     <div className="text-xs mb-2 text-light-secondary-text dark:text-dark-secondary-text">
                         Choose language
                     </div>

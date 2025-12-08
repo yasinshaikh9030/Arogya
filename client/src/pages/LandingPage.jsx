@@ -42,20 +42,20 @@ function LandingPage() {
             <div className="absolute inset-0 -z-20 h-full">
                 <BackgroundRippleEffect />
             </div>
-            <div className="text-light-primary-text w-screen h-screen flex flex-col gap-6 items-center justify-center">
+            <div className="text-light-primary-text w-full min-h-[80vh] flex flex-col gap-6 items-center justify-center px-4 pt-24 md:h-screen md:px-0">
                 <div className="flex flex-col items-center justify-center font-semibold leading-16">
-                    <p className="text-[60px] text-center font-bold flex dark:text-dark-primary-text text-light-primary-text">
+                    <p className="text-3xl sm:text-4xl lg:text-[60px] text-center font-bold flex dark:text-dark-primary-text text-light-primary-text">
                         Connect, Diagnose, Treat
                     </p>
-                    <p className="text-light-primary/50 dark:text-dark-primary/50 text-[60px] font-extrabold sub-heading">
+                    <p className="text-light-primary/50 dark:text-dark-primary/50 text-2xl sm:text-3xl lg:text-[60px] font-extrabold sub-heading text-center">
                         All in One App.
                     </p>
                 </div>
                 <div className="flex flex-col gap-4 items-center">
-                    <p className="dark:text-dark-secondary-text text-light-secondary-text">
+                    <p className="dark:text-dark-secondary-text text-light-secondary-text text-center text-sm sm:text-base">
                         Check symptoms, consult doctors—one tap.
                     </p>
-                    <button className="bg-light-primary dark:bg-dark-primary text-light-bg py-3 px-4 rounded flex gap-1">
+                    <button className="bg-light-primary dark:bg-dark-primary text-light-bg py-3 px-6 rounded-full flex items-center gap-2 text-sm sm:text-base shadow-md">
                         <p>Get Started</p>
                         <ArrowRight />
                     </button>
@@ -65,9 +65,9 @@ function LandingPage() {
                 <ContainerScroll
                     titleComponent={
                         <>
-                            <h1 className="text-3xl font-semibold text-neutral-700 ">
+                            <h1 className="text-2xl sm:text-3xl font-semibold text-neutral-700 ">
                                 Unleash the power of <br />
-                                <span className="text-[4rem] font-bold leading-none text-light-primary/80 dark:text-dark-primary/80">
+                                <span className="text-4xl sm:text-[4rem] font-bold leading-none text-light-primary/80 dark:text-dark-primary/80">
                                     AI-driven Healthcare
                                 </span>
                             </h1>
@@ -78,7 +78,7 @@ function LandingPage() {
                         alt="hero"
                         height={720}
                         width={1400}
-                        className="mx-auto rounded-2xl object-cover h-full object-left-top"
+                        className="mx-auto h-full w-full rounded-2xl object-contain md:object-cover md:object-left-top"
                         draggable={false}
                     />
                 </ContainerScroll>

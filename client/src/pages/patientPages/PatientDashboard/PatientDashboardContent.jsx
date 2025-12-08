@@ -75,8 +75,7 @@ const PatientDashboardContent = () => {
                 // Save to backend
                 const token = await getToken();
                 await axios.put(
-                    `${import.meta.env.VITE_SERVER_URL}/api/patient/${
-                        user.id
+                    `${import.meta.env.VITE_SERVER_URL}/api/patient/${user.id
                     }/location`,
                     { latitude, longitude },
                     {
@@ -120,8 +119,7 @@ const PatientDashboardContent = () => {
             setLoading(true);
             const token = await getToken();
             const response = await axios.get(
-                `${import.meta.env.VITE_SERVER_URL}/api/patient/get-patient/${
-                    user.id
+                `${import.meta.env.VITE_SERVER_URL}/api/patient/get-patient/${user.id
                 }`,
                 {
                     headers: {
@@ -178,8 +176,7 @@ const PatientDashboardContent = () => {
 
             // Fetch appointments (to collect prescriptions)
             const apptRes = await axios.get(
-                `${import.meta.env.VITE_SERVER_URL}/api/appointment/patient/${
-                    user.id
+                `${import.meta.env.VITE_SERVER_URL}/api/appointment/patient/${user.id
                 }`,
                 {
                     headers: { Authorization: `Bearer ${token}` },
@@ -196,9 +193,8 @@ const PatientDashboardContent = () => {
             for (const a of allAppts) {
                 if (Array.isArray(a.prescription)) {
                     for (const item of a.prescription) {
-                        const key = `${item.medicine || ""}::${
-                            item.dosage || ""
-                        }`;
+                        const key = `${item.medicine || ""}::${item.dosage || ""
+                            }`;
                         if (!seen.has(key) && item.medicine) {
                             seen.add(key);
                             flat.push({
@@ -214,8 +210,7 @@ const PatientDashboardContent = () => {
 
             // Fetch already saved reminders
             const rRes = await axios.get(
-                `${import.meta.env.VITE_SERVER_URL}/api/patient/${
-                    user.id
+                `${import.meta.env.VITE_SERVER_URL}/api/patient/${user.id
                 }/reminders`,
                 {
                     headers: { Authorization: `Bearer ${token}` },
@@ -236,33 +231,37 @@ const PatientDashboardContent = () => {
         <div className="min-h-screen bg-gradient-to-br from-light-background to-light-background-secondary dark:from-dark-background dark:to-dark-background-secondary">
             <div className="max-w-8xl mx-auto md:px-0 px-3">
                 {/* Enhanced Header with Gradient */}
-                <div className="relative mb-4 overflow-hidden rounded-3xl dark:bg-dark-bg bg-light-surface md:p-8 p-4 text-light-primary-text dark:text-dark-primary-text">
-                    <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                        <div className="flex md:flex-row flex-col items-center space-x-6 mb-6 lg:mb-0">
-                            <div className="relative">
-                                <img
-                                    src={user.imageUrl}
-                                    alt="Profile"
-                                    className="md:w-30 md:h-30 h-20 w-20 rounded-full object-cover border-4 border-white/30 shadow-lg"
-                                />
-                                <div className="absolute -bottom-0 -right-0 w-8 h-8 bg-dark-surface rounded-full flex items-center justify-center">
-                                    <CheckCircle className="w-5 h-5 text-white" />
-                                </div>
+                <div className="relative mb-4 overflow-hidden rounded-3xl dark:bg-dark-bg bg-light-surface md:p-6 p-4 text-light-primary-text dark:text-dark-primary-text">
+                    <div className="relative z-10 flex items-center gap-4 md:gap-6">
+                        <div className="relative">
+                            <img
+                                src={user.imageUrl}
+                                alt="Profile"
+                                className="h-16 w-16 md:h-20 md:w-20 rounded-full object-cover border-4 border-white/30 shadow-lg"
+                            />
+                            <div className="absolute -bottom-0 -right-0 w-7 h-7 bg-dark-surface rounded-full flex items-center justify-center">
+                                <CheckCircle className="w-4 h-4 text-white" />
                             </div>
-                            <div className="">
-                                <div className="flex flex-col">
-                                    <h1 className="md:text-4xl text-xl font-bold">
-                                        {getGreeting()}, {userData.fullName}
-                                    </h1>
-                                    <p className="text-light-secondary-text md:text-lg text-sm">
-                                        Here's your health overview today
-                                    </p>
-                                </div>
-                                <div className="flex items-center space-x-4 mt-4">
-                                    <span className="md:text-sm text-xs">
-                                        {formatDate(currentTime)}
-                                    </span>
-                                </div>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <p className="text-xs md:text-sm text-light-secondary-text dark:text-dark-secondary-text">
+                                Patient Profile
+                            </p>
+                            <h1 className="text-lg md:text-2xl font-semibold">
+                                {userData.fullName}
+                            </h1>
+                            <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs md:text-sm text-light-secondary-text dark:text-dark-secondary-text">
+                                {userData.dob && (
+                                    <span>Age {calculateAge(userData.dob)}</span>
+                                )}
+                                {userData.gender && (
+                                    <span className="capitalize">{userData.gender}</span>
+                                )}
+                                <span>{formatDate(currentTime)}</span>
+                            </div>
+                            <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs md:text-sm text-light-secondary-text dark:text-dark-secondary-text">
+                                {userData.phone && <span>{userData.phone}</span>}
+                                {userData.district && <span>{userData.district}</span>}
                             </div>
                         </div>
                     </div>
@@ -271,7 +270,7 @@ const PatientDashboardContent = () => {
                 {/* Main Dashboard Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 mb-4">
                     {/* Personal Information Card */}
-                    <div className="lg:col-span-2 dark:bg-dark-bg bg-light-surface rounded-2xl md:p-6 p-4 py-6 shadow-md hover:shadow-xl transition-all duration-200">
+                    <div className="hidden lg:col-span-2 dark:bg-dark-bg bg-light-surface rounded-2xl md:p-6 p-4 py-6 shadow-md hover:shadow-xl transition-all duration-200">
                         <div className="flex items-center justify-between md:mb-6 mb-3">
                             <h2 className="md:text-2xl text-xl font-bold flex items-center">
                                 <User className="w-6 h-6 md:mr-3 mr-1 text-light-primary dark:text-dark-primary" />
@@ -344,7 +343,7 @@ const PatientDashboardContent = () => {
                     </div>
 
                     {/* Quick Actions */}
-                    <div className="dark:bg-dark-bg bg-light-surface rounded-2xl py-6 px-4 shadow-md hover:shadow-xl transition-all duration-300">
+                    <div className="hidden dark:bg-dark-bg bg-light-surface rounded-2xl py-6 px-4 shadow-md hover:shadow-xl transition-all duration-300">
                         <h3 className="md:text-2xl text-xl font-bold text-light-primary-text dark:text-dark-primary-text md:mb-6 mb-4 flex items-center">
                             <Plus className="w-5 h-5 md:mr-3 mr-1 text-light-primary dark:text-dark-primary" />
                             Quick Actions
@@ -473,12 +472,10 @@ const PatientDashboardContent = () => {
                                                                 );
                                                                 try {
                                                                     await axios.post(
-                                                                        `${
-                                                                            import.meta
-                                                                                .env
-                                                                                .VITE_SERVER_URL
-                                                                        }/api/patient/${
-                                                                            user.id
+                                                                        `${import.meta
+                                                                            .env
+                                                                            .VITE_SERVER_URL
+                                                                        }/api/patient/${user.id
                                                                         }/reminders`,
                                                                         {
                                                                             medicine:
@@ -490,34 +487,32 @@ const PatientDashboardContent = () => {
                                                                         },
                                                                         {
                                                                             headers:
-                                                                                {
-                                                                                    Authorization: `Bearer ${token}`,
-                                                                                },
+                                                                            {
+                                                                                Authorization: `Bearer ${token}`,
+                                                                            },
                                                                         }
                                                                     );
 
                                                                     // refresh reminders
                                                                     const rRes =
                                                                         await axios.get(
-                                                                            `${
-                                                                                import.meta
-                                                                                    .env
-                                                                                    .VITE_SERVER_URL
-                                                                            }/api/patient/${
-                                                                                user.id
+                                                                            `${import.meta
+                                                                                .env
+                                                                                .VITE_SERVER_URL
+                                                                            }/api/patient/${user.id
                                                                             }/reminders`,
                                                                             {
                                                                                 headers:
-                                                                                    {
-                                                                                        Authorization: `Bearer ${token}`,
-                                                                                    },
+                                                                                {
+                                                                                    Authorization: `Bearer ${token}`,
+                                                                                },
                                                                             }
                                                                         );
                                                                     setReminders(
                                                                         rRes
                                                                             .data
                                                                             .reminders ||
-                                                                            []
+                                                                        []
                                                                     );
                                                                 } catch (err) {
                                                                     console.error(
@@ -525,8 +520,8 @@ const PatientDashboardContent = () => {
                                                                         err
                                                                             ?.response
                                                                             ?.data ||
-                                                                            err.message ||
-                                                                            err
+                                                                        err.message ||
+                                                                        err
                                                                     );
                                                                 } finally {
                                                                     setSavingMap(
@@ -585,20 +580,17 @@ const PatientDashboardContent = () => {
                                                                     const token =
                                                                         await getToken();
                                                                     await axios.delete(
-                                                                        `${
-                                                                            import.meta
-                                                                                .env
-                                                                                .VITE_SERVER_URL
-                                                                        }/api/patient/${
-                                                                            user.id
-                                                                        }/reminders/${
-                                                                            r._id
+                                                                        `${import.meta
+                                                                            .env
+                                                                            .VITE_SERVER_URL
+                                                                        }/api/patient/${user.id
+                                                                        }/reminders/${r._id
                                                                         }`,
                                                                         {
                                                                             headers:
-                                                                                {
-                                                                                    Authorization: `Bearer ${token}`,
-                                                                                },
+                                                                            {
+                                                                                Authorization: `Bearer ${token}`,
+                                                                            },
                                                                         }
                                                                     );
                                                                     setReminders(
@@ -619,8 +611,8 @@ const PatientDashboardContent = () => {
                                                                         err
                                                                             ?.response
                                                                             ?.data ||
-                                                                            err.message ||
-                                                                            err
+                                                                        err.message ||
+                                                                        err
                                                                     );
                                                                 }
                                                             }}
@@ -650,13 +642,13 @@ const PatientDashboardContent = () => {
                 {/* Secondary Information Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-4">
                     {/* Medical Details */}
-                    <div className="dark:bg-dark-bg bg-light-surface rounded-2xl md:p-6 p-4 shadow-md hover:shadow-xl transition-all duration-300">
-                        <h3 className="md:text-2xl text-xl font-bold text-light-primary-text dark:text-dark-primary-text mb-6 flex items-center">
+                    <div className="dark:bg-dark-bg bg-light-surface rounded-2xl md:p-4 p-3 shadow-md hover:shadow-xl transition-all duration-300">
+                        <h3 className="md:text-2xl text-xl font-bold text-light-primary-text dark:text-dark-primary-text mb-4 flex items-center">
                             <Heart className="w-5 h-5 md:mr-3 mr-1 text-light-primary dark:text-dark-primary" />
                             Medical Details
                         </h3>
-                        <div className="md:space-y-4 space-y-2">
-                            <div className="flex md:flex-row flex-col md:items-center items-start md:justify-between justify-start p-3 rounded-xl bg-light-background dark:bg-dark-background">
+                        <div className="md:space-y-3 space-y-1.5">
+                            <div className="flex md:flex-row flex-col md:items-center items-start md:justify-between justify-start py-2 px-3 rounded-xl bg-light-background dark:bg-dark-background">
                                 <span className="text-sm font-medium text-light-secondary-text dark:text-dark-secondary-text">
                                     Medical History
                                 </span>
@@ -664,7 +656,7 @@ const PatientDashboardContent = () => {
                                     {userData.medicalHistory}
                                 </span>
                             </div>
-                            <div className="flex items-center justify-between p-3 rounded-xl bg-light-background dark:bg-dark-background">
+                            <div className="flex items-center justify-between py-2 px-3 rounded-xl bg-light-background dark:bg-dark-background">
                                 <span className="text-sm font-medium text-light-secondary-text dark:text-dark-secondary-text">
                                     Govt. ID Type
                                 </span>
@@ -718,7 +710,7 @@ const PatientDashboardContent = () => {
                     </div>
 
                     {/* Account Information */}
-                    <div className="dark:bg-dark-bg bg-light-surface rounded-2xl md:p-6 p-4 shadow-md hover:shadow-xl transition-all duration-300">
+                    <div className="hidden dark:bg-dark-bg bg-light-surface rounded-2xl md:p-6 p-4 shadow-md hover:shadow-xl transition-all duration-300">
                         <h3 className="md:text-2xl text-xl font-bold text-light-primary-text dark:text-dark-primary-text md:mb-6 mb-4 flex items-center">
                             <Settings className="w-5 h-5 mr-2 text-light-primary dark:text-dark-primary" />
                             Account Information
