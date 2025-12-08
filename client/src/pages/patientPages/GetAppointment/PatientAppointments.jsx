@@ -1,28 +1,12 @@
-import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useUser, useAuth } from "@clerk/clerk-react";
-import {
-    Stethoscope,
-    Calendar,
-    IndianRupee,
-    CheckCircle2,
-    Clock,
-    Mail,
-    Phone,
-    Star,
-    Link as LinkIcon,
-    FileText,
-    User2,
-    ThumbsUp,
-    ThumbsDown,
-    Info,
-} from "lucide-react";
-import AppointmentsList from "../../../components/patient/AppointmentsList";
+import React, { useEffect, useState } from "react";
 import Loader from "../../../components/main/Loader";
+import AppointmentsList from "../../../components/patient/AppointmentsList";
+import { useUser } from '../../../context/UserContext';
+import { auth } from "../../../config/config";
 
 const PatientAppointments = () => {
     const { user } = useUser();
-    const { getToken } = useAuth();
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -33,9 +17,9 @@ const PatientAppointments = () => {
         (async () => {
             try {
                 setLoading(true);
-                const token = await getToken();
+                const token = await auth.currentUser.getIdToken();
                 const res = await axios.get(
-                    `${import.meta.env.VITE_SERVER_URL}/api/appointment/patient/${user.id}`,
+                    `${import.meta.env.VITE_SERVER_URL}/api/appointment/patient/${user.uid}`,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
 
@@ -57,7 +41,7 @@ const PatientAppointments = () => {
         return () => {
             mounted = false;
         };
-    }, [user, getToken]);
+    }, [user]);
 
     if (loading) {
         return <Loader/>;

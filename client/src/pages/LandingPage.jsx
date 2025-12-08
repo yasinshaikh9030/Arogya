@@ -27,7 +27,6 @@ function LandingPage() {
             // Ensure Clerk user data is loaded before attempting to get a token
             try {
                 const token = await getToken();
-                console.log(token);
             } catch (error) {
                 console.error("Error fetching Clerk session token:", error);
             }

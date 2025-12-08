@@ -1,9 +1,10 @@
-import { useAuth, useUser } from "@clerk/clerk-react";
 import { Shield, Stethoscope, User, UserCircle, Building2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useUser } from "../../context/UserContext";
+import { auth } from "../../config/config";
 
 const ROLES = ["Patient", "Doctor", "Pharmacy", "Admin"];
 
@@ -12,8 +13,8 @@ export default function OnboardingForm() {
     const navigate = useNavigate();
     const [role, setRole] = useState("");
     const [saving, setSaving] = useState(false);
-    const { getToken } = useAuth();
-
+    // const { getToken } = useAuth();
+    console.log(user);
     const [patient, setPatient] = useState({
         fullName: "",
         dob: "",
@@ -25,7 +26,7 @@ export default function OnboardingForm() {
         governmentIdProof: null,
         emergencyContactName: "",
         emergencyContactPhone: "",
-        clerkUserId: user.id,
+        clerkUserId: user.uid,
         telemedicineConsent: true,
     });
 
@@ -57,7 +58,7 @@ export default function OnboardingForm() {
         registrationType: "",
         gstNumber: "",
         description: "",
-        clerkUserId: user.id,
+        clerkUserId: user.uid,
     });
 
     const [admin, setAdmin] = useState({
@@ -91,13 +92,15 @@ export default function OnboardingForm() {
 
     // Check if user has already completed onboarding
     useEffect(() => {
-        if (isLoaded && user && user.unsafeMetadata?.onboardingCompleted) {
-            const userRole = user.unsafeMetadata.role;
+        if (isLoaded && user && user.metadata?.onboardingCompleted) {
+            const userRole = user.metadata.role;
             if (userRole) {
                 navigate(`/dashboard/${userRole.toLowerCase()}`);
             }
         }
     }, [isLoaded, user, navigate]);
+
+    console.log(user);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -112,7 +115,7 @@ export default function OnboardingForm() {
                 doctor,
                 pharmacy,
                 admin,
-                clerkUserId: user?.id,
+                clerkUserId: user?.uid,
             });
             let backendUrl = "";
             let backendBody = {};
@@ -139,7 +142,8 @@ export default function OnboardingForm() {
                 backendBody = admin;
             }
 
-            const token = await getToken();
+            const token = await auth?.currentUser?.getIdToken();
+            console.log(token);
 
             if (backendUrl) {
                 console.log("Submitting to backend:", backendUrl, backendBody);
@@ -179,13 +183,19 @@ export default function OnboardingForm() {
                         "telemedicineConsent",
                         backendBody.telemedicineConsent === true ? true : false
                     );
+                    formData.append(
+                        "clerkUserId",
+                        (backendBody.clerkUserId = user.uid)
+                    );
                     try {
+                        console.log("===");
                         response = await axios.post(backendUrl, formData, {
                             headers: {
                                 "Content-Type": "multipart/form-data",
                                 Authorization: `Bearer ${token}`,
                             },
                         });
+                        console.log("===");
                         toast.success(
                             "Doctor information submitted successfully"
                         );
@@ -222,7 +232,7 @@ export default function OnboardingForm() {
                         "telemedicineConsent",
                         backendBody.telemedicineConsent || true
                     );
-                    formData.append("clerkUserId", user?.id || "");
+                    formData.append("clerkUserId", user?.uid || "");
 
                     try {
                         response = await axios.post(backendUrl, formData, {
@@ -247,6 +257,7 @@ export default function OnboardingForm() {
                                 Authorization: `Bearer ${token}`,
                             },
                         });
+                        console.log(response);
                         toast.success("Information submitted successfully");
                     } catch (error) {
                         toast.error("Error submitting form");
@@ -257,21 +268,26 @@ export default function OnboardingForm() {
                 console.log("Backend response:", response.data);
                 console.log("Backend response Detailed:", response);
             }
+            console.log("===========");
 
             // Update Clerk metadata as before
+            console.log("===========", user);
             if (user) {
-                await user.update({
-                    unsafeMetadata: {
-                        role: role,
-                        onboardingCompleted: true,
-                        ...(role === "Patient" && { patientData: patient }),
-                        ...(role === "Doctor" && { doctorData: doctor }),
-                        ...(role === "Pharmacy" && { pharmacyData: pharmacy }),
-                        ...(role === "Admin" && { adminData: admin }),
-                    },
-                });
-                console.log("User metadata updated successfully");
+                (user.metadata = {
+                    role: role,
+                    onboardingCompleted: true,
+                    ...(role === "Patient" && { patientData: patient }),
+                    ...(role === "Doctor" && { doctorData: doctor }),
+                    ...(role === "Pharmacy" && { pharmacyData: pharmacy }),
+                    ...(role === "Admin" && { adminData: admin }),
+                }),
+                    console.log("User metadata updated successfully");
             }
+
+            localStorage.setItem(
+                `arogya-profile-${user.uid}`,
+                JSON.stringify(user.metadata)
+            );
 
             navigate(`/${role.toLowerCase()}/dashboard`);
         } catch (error) {

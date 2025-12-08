@@ -1,10 +1,11 @@
 import { Navigate } from "react-router-dom";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "../../context/UserContext";
 
 export default function RoleRedirect() {
 	const { isLoaded, user } = useUser();
+	console.log(user);
 	if (!isLoaded) return null;
-	const rawRole = user?.publicMetadata?.role || user?.unsafeMetadata?.role;
+	const rawRole = user?.metadata?.role;
 	const role = typeof rawRole === "string" ? rawRole.trim().toLowerCase() : null;
 	if (!role) return <Navigate to="/onboarding" replace />;
 

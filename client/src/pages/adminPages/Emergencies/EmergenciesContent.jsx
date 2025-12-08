@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useAuth } from "@clerk/clerk-react";
 import {
@@ -6,16 +6,14 @@ import {
     User,
     Phone,
     MapPin,
-    Clock,
     Calendar,
     Stethoscope,
     Video,
     CheckCircle2,
     XCircle,
     Loader2,
-    Users,
-    ChevronDown,
-    ChevronUp,
+    PhoneCall,
+    ExternalLink,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -167,6 +165,71 @@ const EmergenciesContent = ({ doctors = [] }) => {
         return dates;
     };
 
+    const stats = useMemo(() => {
+        const active = emergencies.filter((e) => e.isActive && !e.isCompleted)
+            .length;
+        const assigned = emergencies.filter(
+            (e) => e.doctorId && !e.isCompleted
+        ).length;
+        const completedToday = emergencies.filter((e) => {
+            if (!e.isCompleted || !e.completedAt) return false;
+            const completedDate = new Date(e.completedAt).toDateString();
+            return completedDate === new Date().toDateString();
+        }).length;
+        return { active, assigned, completedToday };
+    }, [emergencies]);
+
+    // Only show emergencies that are not completed
+    const activeEmergencyRecords = emergencies.filter((e) => !e.isCompleted);
+
+    const allEmergencies = useMemo(
+        () => [
+            ...activeEmergencyRecords.map((e) => ({
+                ...e,
+                type: "emergency_record",
+            })),
+            ...emergencyAppointments.map((apt) => ({
+                ...apt,
+                type: "emergency_appointment",
+                fullName:
+                    apt.patientId?.fullName ||
+                    apt.emergencyDetails?.fullName ||
+                    "Unknown",
+                phone:
+                    apt.patientId?.phone || apt.emergencyDetails?.phone || "N/A",
+                location:
+                    apt.emergencyDetails?.location ||
+                    apt.patientId?.location ||
+                    null,
+            })),
+        ],
+        [activeEmergencyRecords, emergencyAppointments]
+    );
+
+    const buildMapsLink = (emergency) => {
+        if (emergency.googleMapsLink) return emergency.googleMapsLink;
+        if (emergency.location?.latitude && emergency.location?.longitude) {
+            return `https://www.google.com/maps?q=${emergency.location.latitude},${emergency.location.longitude}`;
+        }
+        return null;
+    };
+
+    const statusPill = (emergency) => {
+        if (emergency.type === "emergency_appointment" && emergency.status) {
+            const status = emergency.status.toLowerCase();
+            if (status === "completed")
+                return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400";
+            if (status === "active")
+                return "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400";
+            return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400";
+        }
+        if (emergency.isCompleted)
+            return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400";
+        if (emergency.isActive)
+            return "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400";
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400";
+    };
+
     if (loading) {
   return (
             <div className="flex items-center justify-center h-64">
@@ -175,42 +238,45 @@ const EmergenciesContent = ({ doctors = [] }) => {
         );
     }
 
-    // Only show emergencies that are not completed
-    const activeEmergencyRecords = emergencies.filter((e) => !e.isCompleted);
-
-    const allEmergencies = [
-        ...activeEmergencyRecords.map((e) => ({
-            ...e,
-            type: "emergency_record",
-        })),
-        ...emergencyAppointments.map((apt) => ({
-            ...apt,
-            type: "emergency_appointment",
-            fullName:
-                apt.patientId?.fullName ||
-                apt.emergencyDetails?.fullName ||
-                "Unknown",
-            phone: apt.patientId?.phone || apt.emergencyDetails?.phone || "N/A",
-            location:
-                apt.emergencyDetails?.location ||
-                apt.patientId?.location ||
-                null,
-        })),
-    ];
-
     return (
         <div className="p-6 bg-light-bg dark:bg-dark-bg min-h-screen">
-            <div className="mb-6">
-                <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-2">
+            <div className="mb-6 flex flex-col gap-2">
+                <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-200">
                     Emergency Cases
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400">
-                    Manage emergency appointments and requests
+                    Live emergencies, doctor assignments, and quick actions.
                 </p>
             </div>
 
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                {[
+                    { label: "Active", value: stats.active, color: "text-red-600 bg-red-50 dark:bg-red-900/20" },
+                    { label: "Assigned", value: stats.assigned, color: "text-blue-600 bg-blue-50 dark:bg-blue-900/20" },
+                    { label: "Completed Today", value: stats.completedToday, color: "text-green-600 bg-green-50 dark:bg-green-900/20" },
+                ].map((item) => (
+                    <div
+                        key={item.label}
+                        className="rounded-xl border border-gray-200 dark:border-gray-800 p-4 bg-white/80 dark:bg-dark-surface shadow-sm flex items-center justify-between">
+                        <div className="flex flex-col">
+                            <span className="text-sm text-gray-500 dark:text-gray-400">
+                                {item.label}
+                            </span>
+                            <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                                {item.value}
+                            </span>
+                        </div>
+                        <div
+                            className={`px-3 py-1 text-xs font-semibold rounded-full ${item.color}`}>
+                            Live
+                        </div>
+                    </div>
+                ))}
+            </div>
+
             {/* Emergency Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {allEmergencies.length === 0 ? (
                     <div className="col-span-full text-center py-12">
                         <AlertTriangle className="w-16 h-16 mx-auto text-gray-400 mb-4" />
@@ -233,37 +299,19 @@ const EmergenciesContent = ({ doctors = [] }) => {
                                     </span>
                                 </div>
 
-                                {/* Status badge based on type */}
-                                {emergency.type === "emergency_appointment" &&
-                                    emergency.status && (
-                                        <span
-                                            className={`text-xs px-2 py-1 rounded ${
-                                                emergency.status === "completed"
-                                                    ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
-                                                    : emergency.status ===
-                                                      "active"
-                                                    ? "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
-                                                    : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400"
-                                            }`}>
-                                            {emergency.status.toUpperCase()}
-                                        </span>
-                                    )}
-                                {emergency.type === "emergency_record" && (
-                                    <span
-                                        className={`text-xs px-2 py-1 rounded ${
-                                            emergency.isCompleted
-                                                ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
-                                                : emergency.isActive
-                                                ? "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
-                                                : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400"
-                                        }`}>
-                                        {emergency.isCompleted
-                                            ? "COMPLETED"
-                                            : emergency.isActive
-                                            ? "ACTIVE"
-                                            : "PENDING"}
-                                    </span>
-                                )}
+                                <span
+                                    className={`text-xs px-2 py-1 rounded ${statusPill(
+                                        emergency
+                                    )}`}>
+                                    {emergency.type === "emergency_appointment" &&
+                                    emergency.status
+                                        ? emergency.status.toUpperCase()
+                                        : emergency.isCompleted
+                                        ? "COMPLETED"
+                                        : emergency.isActive
+                                        ? "ACTIVE"
+                                        : "PENDING"}
+                                </span>
                             </div>
 
                             <div className="space-y-2 mb-4">
@@ -330,6 +378,36 @@ const EmergenciesContent = ({ doctors = [] }) => {
                                     )}
                             </div>
 
+                            {/* Actions */}
+                            <div className="flex flex-wrap gap-2 mt-4">
+                                <a
+                                    href={`tel:${emergency.phone}`}
+                                    className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">
+                                    <PhoneCall className="w-4 h-4" />
+                                    Call patient
+                                </a>
+                                {emergency.doctorId &&
+                                    typeof emergency.doctorId === "object" &&
+                                    emergency.doctorId.phone && (
+                                        <a
+                                            href={`tel:${emergency.doctorId.phone}`}
+                                            className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">
+                                            <Stethoscope className="w-4 h-4" />
+                                            Call doctor
+                                        </a>
+                                    )}
+                                {buildMapsLink(emergency) && (
+                                    <a
+                                        href={buildMapsLink(emergency)}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+                                        <ExternalLink className="w-4 h-4" />
+                                        Open in Maps
+                                    </a>
+                                )}
+                            </div>
+
                             {emergency.type === "emergency_record" &&
                                 !emergency.doctorId && (
                                     <button
@@ -338,8 +416,8 @@ const EmergenciesContent = ({ doctors = [] }) => {
                                             setBookingModalOpen(true);
                                             setSelectedDate(getTodayDate());
                                         }}
-                                        className="w-full mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition text-sm">
-                                        Book Appointment
+                                        className="w-full mt-3 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition text-sm">
+                                        Assign / Book Appointment
                                     </button>
                                 )}
                         </div>

@@ -1,31 +1,33 @@
 import React, { useEffect, useState } from "react";
-import { useUser, useAuth } from "@clerk/clerk-react";
+import { useUser } from '../../../context/UserContext';
 import axios from "axios";
 import PostCard from "../../../components/Doctor/PostCard";
 import { Stethoscope, XCircle } from "lucide-react";
+import { auth } from "../../../config/config";
 
 export default function PatientCommunityContent() {
     const { user } = useUser();
-    const { getToken } = useAuth();
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [typeFilter, setTypeFilter] = useState("All");
 
     useEffect(() => {
-        if (user?.id) fetchPosts();
+        if (user?.uid) fetchPosts();
     }, [user]);
 
     const fetchPosts = async () => {
         try {
             setLoading(true);
-            const token = await getToken();
+            const token = await auth.currentUser.getIdToken();
+            console.log("=====");
             const res = await axios.get(
                 `${import.meta.env.VITE_SERVER_URL}/api/articles/all`,
                 {
                     headers: { Authorization: `Bearer ${token}` },
                 }
             );
+            console.log(res);
             if (res.data.success) setPosts(res.data.data);
         } catch (err) {
             console.error("Failed to load community posts", err);

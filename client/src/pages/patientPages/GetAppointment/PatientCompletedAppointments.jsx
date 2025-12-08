@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useUser, useAuth } from "@clerk/clerk-react";
+import { useUser } from '../../../context/UserContext';
 import {
     Stethoscope,
     Calendar,
@@ -19,10 +19,10 @@ import {
 import AppointmentsList from "../../../components/patient/AppointmentsList";
 import RatingDialog from "../../../components/patient/RatingDialog";
 import Loader from "../../../components/main/Loader";
+import { auth } from "../../../config/config";
 
 const PatientCompletedAppointments = () => {
     const { user } = useUser();
-    const { getToken } = useAuth();
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -36,9 +36,9 @@ const PatientCompletedAppointments = () => {
         (async () => {
             try {
                 setLoading(true);
-                const token = await getToken();
+                const token = await auth.currentUser.getIdToken();
                 const res = await axios.get(
-                    `${import.meta.env.VITE_SERVER_URL}/api/appointment/patient/${user.id}`,
+                    `${import.meta.env.VITE_SERVER_URL}/api/appointment/patient/${user.uid}`,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
                 if (!mounted) return;
@@ -70,12 +70,12 @@ const PatientCompletedAppointments = () => {
         return () => {
             mounted = false;
         };
-    }, [user, getToken]);
+    }, [user]);
 
     const handleRatingSubmit = async (rating, review) => {
       try {
         await axios.post(`${import.meta.env.VITE_SERVER_URL}/api/appointment/${selectedRatingAppt._id}/rating`, {
-          patientId: user.id,
+          patientId: user.uid,
           doctorId: selectedRatingAppt.doctorId?._id || selectedRatingAppt.doctorId,
           rating,
           review,

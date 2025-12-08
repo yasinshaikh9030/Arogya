@@ -13,10 +13,10 @@ import {
     CheckCircle2,
     Languages,
 } from "lucide-react";
-import { useUser } from "@clerk/clerk-react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import AiHealthInsight from "../../../components/patient/AiHealthInsight";
+import { useUser } from "../../../context/UserContext";
 
 const COMMON_SYMPTOMS = [
     "Fever",
@@ -58,7 +58,8 @@ const SymptomCheckerContent = () => {
     const [aiInsight, setAiInsight] = useState(null);
     const recognitionRef = useRef(null);
 
-    const user = useUser().user.unsafeMetadata.patientData;
+    const { user } = useUser();
+    console.log(user);
 
     const canSubmit = useMemo(
         () => symptoms.length > 0 || input.trim().length > 0,
@@ -99,7 +100,7 @@ const SymptomCheckerContent = () => {
         return Math.abs(ageDate.getUTCFullYear() - 1970);
     };
 
-    const age = user.dob ? calcAge(user.dob) : "";
+    const age = user?.metadata?.patientData?.dob ? calcAge(user?.metadata?.patientData?.dob) : "";
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -142,7 +143,7 @@ const SymptomCheckerContent = () => {
                 loading: "AI is analyzing your symptoms...",
                 success: (data) =>
                     `Analysis complete! Found ${data.possibleDiseases?.length || 0
-                    } possible conditions.`,
+                    } possible condition${data.possibleDiseases?.length !== 1 ? 's' : ''}.`,
                 error: () => `Failed to analyze symptoms.`,
             }
         );

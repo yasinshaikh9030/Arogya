@@ -71,12 +71,12 @@ exports.createPatient = async (req, res) => {
         errors.push(
             "emergencyContactName is required and must be a non-empty string (max 100 chars)"
         );
-    if (
-        !clerkUserId ||
-        typeof clerkUserId !== "string" ||
-        clerkUserId.trim() === ""
-    )
-        errors.push("clerkUserId is required and must be a non-empty string");
+    // if (
+    //     !clerkUserId ||
+    //     typeof clerkUserId !== "string" ||
+    //     clerkUserId.trim() === ""
+    // )
+    //     errors.push("clerkUserId is required and must be a non-empty string");
 
     // dob
     if (!dob || isNaN(Date.parse(dob))) {
@@ -158,6 +158,7 @@ exports.createPatient = async (req, res) => {
     console.log("Government ID Proof URL:", governmentIdProofUrl);
 
     try {
+        console.log("clerkUserId", clerkUserId);
         const patient = await Patient.create({
             fullName,
             dob,
@@ -243,6 +244,7 @@ exports.getPatientByClerkId = async (req, res) => {
             });
         }
         const patient = await Patient.findOne({ clerkUserId });
+        console.log(patient);
         if (!patient) {
             return res.status(404).json({ error: "Patient not found" });
         }

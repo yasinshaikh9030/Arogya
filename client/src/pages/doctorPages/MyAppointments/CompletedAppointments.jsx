@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useUser, useAuth } from "@clerk/clerk-react";
+import { useUser } from "../../../context/UserContext";
 import axios from "axios";
 import {
     CheckCircle2,
@@ -13,6 +13,7 @@ import {
     IndianRupee,
     MessageSquareText,
 } from "lucide-react";
+import { auth } from "../../../config/config";
 
 const formatDateTime = (iso) => {
     try {
@@ -72,23 +73,25 @@ const Stars = ({ value = 0, outOf = 5 }) => (
 
 const CompletedAppointments = () => {
     const { user } = useUser();
-    const { getToken } = useAuth();
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    console.log(user);
     useEffect(() => {
         if (!user) return;
         let mounted = true;
         (async () => {
             try {
                 setLoading(true);
-                const token = await getToken();
+                const token = await auth.currentUser.getIdToken();
+                console.log(user.uid);
                 const res = await axios.get(
-                    `${import.meta.env.VITE_SERVER_URL}/api/appointment/doctor/${user.id}`,
+                    `${import.meta.env.VITE_SERVER_URL}/api/appointment/doctor/${user.uid}`,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
                 if (!mounted) return;
+                console.log(res);
                 setAppointments(res.data?.data || []);
             } catch (err) {
                 setError("Failed to load appointments");
@@ -100,7 +103,7 @@ const CompletedAppointments = () => {
         return () => {
             mounted = false;
         };
-    }, [user, getToken]);
+    }, [user]);
 
     // Completed or Cancelled
     const done = useMemo(() => {

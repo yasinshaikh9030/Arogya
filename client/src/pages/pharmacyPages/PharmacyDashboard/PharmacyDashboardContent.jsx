@@ -1,4 +1,4 @@
-import { useAuth, useUser } from "@clerk/clerk-react";
+import { useUser } from "../../../context/UserContext";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -22,6 +22,7 @@ import InventoryManagement from "../../../components/pharmcy/InventoryManagement
 import LeafletMap from "../../../components/pharmcy/LeafletMap";
 import BillHistory from "../../../components/pharmcy/BillHistory";
 import CreateBill from "../../../components/pharmcy/CreateBill";
+import { auth } from "../../../config/config";
 
 const PharmacyDashboardContent = (props) => {
     const [pharmacyData, setPharmacyData] = useState(null);
@@ -35,7 +36,6 @@ const PharmacyDashboardContent = (props) => {
     });
 
     const { user } = useUser();
-    const { getToken } = useAuth();
     const navigate = useNavigate();
     const routerLocation = useLocation();
     const searchParams = new URLSearchParams(routerLocation.search);
@@ -44,15 +44,16 @@ const PharmacyDashboardContent = (props) => {
 
     useEffect(() => {
         fetchPharmacyData();
-    }, [user, getToken]);
+    }, [user]);
 
     const fetchPharmacyData = async () => {
         if (!user) return;
         try {
             setLoading(true);
-            const token = await getToken();
+            const token = await auth.currentUser.getIdToken();
             const response = await axios.get(
-                `${import.meta.env.VITE_SERVER_URL}/api/pharmacy/get-pharmacy/${user.id
+                `${import.meta.env.VITE_SERVER_URL}/api/pharmacy/get-pharmacy/${
+                    user.uid
                 }`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );

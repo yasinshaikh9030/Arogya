@@ -206,12 +206,14 @@ const WomenHealthHistory = ({ patientId }) => {
     React.useEffect(() => {
         (async () => {
             try {
+                console.log("=====");
                 const res = await axios.get(
                     `${
                         import.meta.env.VITE_SERVER_URL
                     }/api/womenhealth/${patientId}`
                 );
                 const data = res.data;
+                console.log("=====", res);
                 let count = 0;
                 if (
                     data &&
@@ -537,7 +539,7 @@ const WomenHealthHistory = ({ patientId }) => {
                         <button
                             className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition"
                             onClick={() => setShowCycleModal(false)}>
-                            <X/>
+                            <X />
                         </button>
 
                         <h3 className="text-2xl font-bold mb-6 text-center text-light-primary-text dark:text-dark-primary-text">
@@ -611,14 +613,14 @@ const WomenHealthHistory = ({ patientId }) => {
                             {/* Buttons - Uniform */}
                             <button
                                 onClick={handleFetchCycles}
-                                className="px-5 flex items-center gap-1 py-2  rounded-lg font-semibold bg-light-primary hover:bg-light-primary-hover dark:bg-dark-primary hover:bg-dark-primary-hover text-dark-primary-text transition">
+                                className="px-5 flex items-center gap-1 py-2  rounded-lg font-semibold bg-light-primary hover:bg-light-primary-hover dark:bg-dark-primary text-dark-primary-text transition">
                                 <History size={20} />
                                 <p> History</p>
                             </button>
 
                             <button
                                 onClick={() => window.print()}
-                                className="px-5 flex items-center gap-1 py-2 rounded-lg font-semibold bg-light-secondary hover:bg-light-secondary-hover dark:bg-dark-secondary hover:bg-dark-secondary-hover text-dark-primary-text  transition print:hidden">
+                                className="px-5 flex items-center gap-1 py-2 rounded-lg font-semibold bg-light-secondary hover:bg-light-secondary-hover dark:bg-dark-secondary text-dark-primary-text  transition print:hidden">
                                 <Download size={20} />
                                 <p>Download</p>
                             </button>

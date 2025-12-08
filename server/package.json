@@ -17,6 +17,8 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
+    "firebase-admin": "^13.6.0",
+    "fs": "^0.0.1-security",
     "groq-sdk": "^0.36.0",
     "mongoose": "^8.18.0",
     "multer": "^2.0.2",

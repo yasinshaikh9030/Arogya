@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useUser, useAuth } from "@clerk/clerk-react";
+import { useUser } from "../../../context/UserContext";
 import axios from "axios";
 import {
     CalendarClock,
@@ -15,6 +15,7 @@ import {
     Eye,
 } from "lucide-react";
 import PatientDetailsDialog from "../../../components/Doctor/PatientDetailsDialog";
+import { auth } from "../../../config/config";
 
 const formatDateTime = (iso) => {
     try {
@@ -79,22 +80,21 @@ const InfoRow = ({ icon: Icon, label, value }) => (
 
 const UpcomingAppointments = () => {
     const { user } = useUser();
-    const { getToken } = useAuth();
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedAppointment, setSelectedAppointment] = useState(null);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-
+    
     useEffect(() => {
         if (!user) return;
         let mounted = true;
         (async () => {
             try {
                 setLoading(true);
-                const token = await getToken();
+                const token = await auth.currentUser.getIdToken();
                 const res = await axios.get(
-                    `${import.meta.env.VITE_SERVER_URL}/api/appointment/doctor/${user.id}`,
+                    `${import.meta.env.VITE_SERVER_URL}/api/appointment/doctor/${user.uid}`,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
                 if (!mounted) return;
@@ -109,7 +109,7 @@ const UpcomingAppointments = () => {
         return () => {
             mounted = false;
         };
-    }, [user, getToken]);
+    }, [user]);
 
     // Only confirmed and in the future
     const upcoming = useMemo(() => {

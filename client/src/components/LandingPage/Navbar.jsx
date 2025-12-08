@@ -15,35 +15,28 @@ import {
     LayoutDashboard,
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeProvider";
-import {
-    SignedIn,
-    SignedOut,
-    SignInButton,
-    SignUpButton,
-    SignOutButton,
-    useAuth,
-    UserButton,
-    useUser,
-} from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
-import { div } from "motion/react-client";
 import GoogleTranslater from "./GoogleTranslater";
+import { useUser } from "../../context/UserContext";
+import SignIn from "../auth/SignIn";
+import SignUp from "../auth/SignUp";
 
 const callsToAction = [];
 
 export default function Navbar() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [authMode, setAuthMode] = useState(null); // "signin" | "signup" | null
     const { theme, setTheme } = useTheme();
     const navigate = useNavigate();
 
-    const { isSignedIn } = useAuth();
-    const { user, isLoaded } = useUser();
+    const { user, isLoaded, isSignedIn } = useUser();
 
     // Function to get dashboard route based on user role
     const getDashboardRoute = () => {
         if (!isLoaded || !user) return "/dashboard";
-
-        const userRole = user.unsafeMetadata?.role;
+        
+        console.log("user", user);
+        const userRole = user.metadata?.role;
         console.log(userRole);
         if (!userRole) return "/dashboard";
 
@@ -108,31 +101,44 @@ export default function Navbar() {
                 </div>
                 <div className="hidden lg:flex flex-1" />
                 <div className="hidden lg:flex lg:flex-1 gap-5 lg:justify-end items-center">
-                    <div className="flex gap-8">
-                        {isSignedIn ? (
-                            <div className="flex items-center gap-4">
-                                <button
-                                    onClick={handleDashboardClick}
-                                    className="flex items-center gap-2 text-sm/6 font-semibold text-light-primary-text dark:text-dark-primary-text cursor-pointer">
-                                    Dashboard
-                                </button>
-                                <SignOutButton redirectUrl="/">
-                                    <button className="text-sm/6 font-semibold text-light-primary-text dark:text-dark-primary-text cursor-pointer">
-                                        Logout
+                    {
+                        <div className="flex gap-6 items-center">
+                            {isSignedIn ? (
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={handleDashboardClick}
+                                        className="flex items-center gap-2 text-sm/6 font-semibold text-light-primary-text dark:text-dark-primary-text cursor-pointer">
+                                        Dashboard
                                     </button>
-                                </SignOutButton>
-                                <UserButton />
-                            </div>
-                        ) : (
-                            <SignUpButton
-                                className="inline-block rounded-lg px-3 py-2.5 text-sm/6 bg-gradient-to-r dark:from-[#f4f4f9] dark:to-[#ffffff] from-[#181818] to-[#262626] dark:text-black text-white font-semibold"
-                                mode="modal"
-                                navigate="/sign-up"
-                                fallbackRedirectUrl="/sign-in">
-                                Login
-                            </SignUpButton>
-                        )}
-                    </div>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            onClick={() => setAuthMode("signin")}
+                                            className="inline-flex items-center gap-2 rounded-full bg-light-primary text-white px-4 py-2 text-sm font-semibold shadow-sm hover:bg-light-primary-dark transition">
+                                            Sign In
+                                        </button>
+                                        <button
+                                            onClick={() => setAuthMode("signup")}
+                                            className="inline-flex items-center gap-2 rounded-full border border-light-primary text-light-primary px-4 py-2 text-sm font-semibold shadow-sm hover:bg-light-bg transition">
+                                            Sign Up
+                                        </button>
+                                    </div>
+                                    {authMode === "signin" && (
+                                        <div className="absolute top-full mt-3 bg-white dark:bg-dark-bg shadow-lg rounded-xl p-4 w-80 z-20">
+                                            <SignIn />
+                                        </div>
+                                    )}
+                                    {authMode === "signup" && (
+                                        <div className="absolute top-full mt-3 bg-white dark:bg-dark-bg shadow-lg rounded-xl p-4 w-80 z-20">
+                                            <SignUp />
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    }
                     <div className="flex items-center gap-3">
                         <button
                             onClick={toggleColorBlindTheme}
@@ -141,7 +147,7 @@ export default function Navbar() {
                         </button>
                         <GoogleTranslater />
                     </div>
-                </div>
+                </div> 
             </nav>
             <Dialog
                 open={mobileMenuOpen}
@@ -202,13 +208,20 @@ export default function Navbar() {
                                         </SignOutButton>
                                     </div>
                                 ) : (
-                                    <SignUpButton
-                                        className="inline-block rounded-lg px-3 py-2.5 text-sm/6 bg-gradient-to-r dark:from-[#f4f4f9] dark:to-[#ffffff] from-[#181818] to-[#262626] dark:text-black text-white font-semibold"
-                                        mode="modal"
-                                        navigate="/sign-up"
-                                        fallbackRedirectUrl="/sign-in">
-                                        Login
-                                    </SignUpButton>
+                                    <div className="space-y-2">
+                                        <button
+                                            onClick={() => setAuthMode("signin")}
+                                            className="w-full rounded-lg bg-light-primary text-white px-4 py-2 text-sm font-semibold shadow-sm hover:bg-light-primary-dark transition">
+                                            Sign In
+                                        </button>
+                                        <button
+                                            onClick={() => setAuthMode("signup")}
+                                            className="w-full rounded-lg border border-light-primary text-light-primary px-4 py-2 text-sm font-semibold shadow-sm hover:bg-light-bg transition">
+                                            Sign Up
+                                        </button>
+                                        {authMode === "signin" && <SignIn />}
+                                        {authMode === "signup" && <SignUp />}
+                                    </div>
                                 )}
                             </div>
                         </div>

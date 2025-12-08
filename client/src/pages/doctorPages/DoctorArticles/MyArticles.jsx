@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { useUser, useAuth } from '@clerk/clerk-react';
+import { useUser } from '../../../context/UserContext';
 import axios from 'axios';
 
 import PostCard from '../../../components/Doctor/PostCard';
 import { Edit3, XCircle, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { auth } from '../../../config/config';
 
 const MyArticles = () => {
     const [articles, setArticles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const { user } = useUser();
-    const { getToken } = useAuth();
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [editData, setEditData] = useState({ id: '', title: '', content: '', type: 'Article' });
 
     useEffect(() => {
-        if (user?.id) {
+        if (user?.uid) {
             fetchMyArticles();
         }
     }, [user]);
@@ -27,7 +27,7 @@ const MyArticles = () => {
         const confirmed = window.confirm('Delete this post? This action cannot be undone.');
         if (!confirmed) return;
         try {
-            const token = await getToken();
+            const token = await auth.currentUser.getIdToken();
             await axios.delete(`${import.meta.env.VITE_SERVER_URL}/api/articles/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -81,9 +81,9 @@ const MyArticles = () => {
     const fetchMyArticles = async () => {
         try {
             setLoading(true);
-            const token = await getToken();
+            const token = await auth.currentUser.getIdToken();
             const response = await axios.get(
-                `${import.meta.env.VITE_SERVER_URL}/api/articles/doctor/${user.id}`,
+                `${import.meta.env.VITE_SERVER_URL}/api/articles/doctor/${user.uid}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,

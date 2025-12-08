@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { useUser, useAuth } from "@clerk/clerk-react";
+import { useUser } from "../../../context/UserContext";
 import axios from "axios";
 import { Eye } from "lucide-react";
 import PatientDetailsDialog from "../../../components/Doctor/PatientDetailsDialog";
+import { auth } from "../../../config/config";
 
 const NewAppointments = () => {
     const { user } = useUser();
-    const { getToken } = useAuth();
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -20,9 +20,9 @@ const NewAppointments = () => {
         (async () => {
             try {
                 setLoading(true);
-                const token = await getToken();
+                const token = await auth.currentUser.getIdToken();
                 const res = await axios.get(
-                    `${import.meta.env.VITE_SERVER_URL}/api/appointment/doctor/${user.id}`,
+                    `${import.meta.env.VITE_SERVER_URL}/api/appointment/doctor/${user.uid}`,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
                 if (!mounted) return;
@@ -37,7 +37,7 @@ const NewAppointments = () => {
         return () => {
             mounted = false;
         };
-    }, [user, getToken]);
+    }, [user]);
 
     const handleUpdateAppointmentStatus = async (appointment, newStatus) => {
         try {

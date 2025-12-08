@@ -5,7 +5,7 @@ const emergencySchema = new mongoose.Schema(
         // Patient Information
         fullName: {
             type: String,
-            required: [true, "Full name is required"],
+            // required: [true, "Full name is required"],
             trim: true,
             maxlength: [100, "Full name cannot exceed 100 characters"],
         },
@@ -39,7 +39,11 @@ const emergencySchema = new mongoose.Schema(
                 max: [180, "Longitude must be between -180 and 180"],
             },
         },
-
+        googleMapsLink: {
+            type: String,
+            trim: true,
+            default: "",
+        },
         // Video Call Link
         videoCallLink: {
             type: String,

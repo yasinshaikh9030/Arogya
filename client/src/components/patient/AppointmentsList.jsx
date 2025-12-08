@@ -25,7 +25,7 @@ import Drawer from "../main/Drawer";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { useRazorpay } from "react-razorpay";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from '../../context/UserContext';
 
 const AppointmentsList = ({ appointments }) => {
     const [open, setOpen] = useState(false);
@@ -141,7 +141,7 @@ const AppointmentsList = ({ appointments }) => {
         setErrMsg((e) => ({ ...e, [appointment._id]: null }));
 
         console.log(
-            user.id,
+            user.uid,
             appointment.doctorId?._id || appointment.doctorId,
             rating,
             review
@@ -152,7 +152,7 @@ const AppointmentsList = ({ appointments }) => {
                     appointment._id
                 }/rating`,
                 {
-                    patientId: user.id,
+                    patientId: user.uid,
                     doctorId: appointment.doctorId?._id || appointment.doctorId,
                     rating,
                     review,

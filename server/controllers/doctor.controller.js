@@ -21,9 +21,11 @@ exports.createDoctor = async (req, res) => {
             affiliation,
             experience,
             telemedicineConsent,
+            clerkUserId
         } = req.body;
 
-        const clerkUserId = req.auth?.userId;
+        console.log("====> ", clerkUserId)
+        // const clerkUserId = req.auth?.userId;
 
         if (
             !fullName ||

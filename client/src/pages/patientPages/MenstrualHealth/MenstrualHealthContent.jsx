@@ -1,24 +1,26 @@
 import WomenHealthCalendar from '../../../components/patient/WomenHealthCalendar';
-import { useAuth, useUser } from '@clerk/clerk-react';
+import { useUser } from '../../../context/UserContext';
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import WomenHealthHistory from '../../../components/patient/WomenHealthHistory';
 import Loader from '../../../components/main/Loader';
+import { auth } from '../../../config/config';
 
 const MenstrualHealthContent = () => {
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(true);
     const { user } = useUser();
-    const { getToken } = useAuth();
+
 
     useEffect(() => {
         const fetchUserData = async () => {
             if (!user) return;
             try {
                 setLoading(true);
-                const token = await getToken();
+                const token = await auth.currentUser.getIdToken();
+
                 const response = await axios.get(
-                    `${import.meta.env.VITE_SERVER_URL}/api/patient/get-patient/${user.id}`,
+                    `${import.meta.env.VITE_SERVER_URL}/api/patient/get-patient/${auth.currentUser.uid}`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -33,7 +35,7 @@ const MenstrualHealthContent = () => {
             }
         };
         fetchUserData();
-    }, [user, getToken]);
+    }, [user]);
 
     if (loading) return <Loader/>;
 
@@ -42,8 +44,8 @@ const MenstrualHealthContent = () => {
             <h1 className="text-3xl font-bold text-light-primary-text mb-4 dark:text-dark-primary-text">
                 Women Health Content
             </h1>
-            {userData && <WomenHealthCalendar patientId={userData._id} />}
-            {userData && <WomenHealthHistory patientId={userData._id} />}
+            {userData && <WomenHealthCalendar patientId={user.uid} />}
+            {userData && <WomenHealthHistory patientId={user.uid} />}
         </div>
     );
 };

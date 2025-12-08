@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useAuth, useUser } from "@clerk/clerk-react";
+// import { useAuth, useUser } from "@clerk/clerk-react";
+import {useAuth} from "../../../context/AuthContext";
+import {useUser} from "../../../context/UserContext";
 import axios from "axios";
 import {
     User,
@@ -31,6 +33,7 @@ import {
     File,
 } from "lucide-react";
 import Loader from "../../../components/main/Loader";
+import { auth } from "../../../config/config";
 
 const DocContent = () => {
     const [doctorData, setDoctorData] = useState(null);
@@ -83,7 +86,8 @@ const DocContent = () => {
             if (!manageOpen || !doctorData?._id || !selectedDate) return;
             try {
                 setLoadingPreview(true);
-                const token = await getToken();
+                const token = await auth.currentUser.getIdToken();
+                console.log(token);
                 const res = await axios.get(
                     `${import.meta.env.VITE_SERVER_URL}/api/doctor/${doctorData._id}/slots`,
                     {
@@ -100,12 +104,13 @@ const DocContent = () => {
             }
         };
         fetchPreview();
-    }, [manageOpen, doctorData?._id, selectedDate, getToken]);
+    }, [manageOpen, doctorData?._id, selectedDate]);
     async function fetchDoctor() {
             try {
-                const token = await getToken();
+                const token = await auth.currentUser.getIdToken();
+                console.log(token);
             const res = await axios.get(
-                    `${import.meta.env.VITE_SERVER_URL}/api/doctor/get-doctor/${user.id}`,
+                    `${import.meta.env.VITE_SERVER_URL}/api/doctor/get-doctor/${user.uid}`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             console.log(res.data.data);
@@ -148,9 +153,9 @@ const DocContent = () => {
                 console.log("Doctor location obtained:", latitude, longitude);
 
                 // Save to backend
-                const token = await getToken();
+                const token = await auth.currentUser.getIdToken();
                 await axios.put(
-                    `${import.meta.env.VITE_SERVER_URL}/api/doctor/${user.id}/location`,
+                    `${import.meta.env.VITE_SERVER_URL}/api/doctor/${user.uid}/location`,
                     { latitude, longitude },
                     {
                         headers: {
@@ -192,7 +197,7 @@ const DocContent = () => {
             const token = await getToken();
             const res = await axios.get(`${import.meta.env.VITE_SERVER_URL}/api/doctor/availability`, {
                 headers: { Authorization: `Bearer ${token}` },
-                params: { clerkUserId: user.id },
+                params: { clerkUserId: user.uid },
             });
             const arr = Array.isArray(res.data?.data) ? res.data.data : [];
             const map = {};
@@ -262,7 +267,7 @@ const DocContent = () => {
                 return;
             }
             setAvailValidationMsg("");
-            const res = await axios.post(`${import.meta.env.VITE_SERVER_URL}/api/doctor/availability`, { availableSlots: payload, clerkUserId: user.id }, {
+            const res = await axios.post(`${import.meta.env.VITE_SERVER_URL}/api/doctor/availability`, { availableSlots: payload, clerkUserId: user.uid }, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             // Update local state from response (array of {day,startTime,endTime})
@@ -287,7 +292,7 @@ const DocContent = () => {
         try {
             setSavingBlk(true);
             const token = await getToken();
-            const res = await axios.post(`${import.meta.env.VITE_SERVER_URL}/api/doctor/blackouts`, { ...blackoutForm, clerkUserId: user.id }, {
+            const res = await axios.post(`${import.meta.env.VITE_SERVER_URL}/api/doctor/blackouts`, { ...blackoutForm, clerkUserId: user.uid }, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setBlackouts(res.data?.data || []);
@@ -304,7 +309,7 @@ const DocContent = () => {
             const token = await getToken();
             const res = await axios.delete(`${import.meta.env.VITE_SERVER_URL}/api/doctor/blackouts/${index}`, {
                 headers: { Authorization: `Bearer ${token}` },
-                params: { clerkUserId: user.id },
+                params: { clerkUserId: user.uid },
             });
             setBlackouts(res.data?.data || []);
         } catch (e) {

@@ -95,6 +95,7 @@ const WomenHealthCalendar = ({ patientId }) => {
                     import.meta.env.VITE_SERVER_URL
                 }/api/womenhealth/${patientId}`
             );
+            console.log(response);
             if (response.data && response.data.dailyLogs) {
                 setDailyLogs(response.data.dailyLogs);
             } else {
@@ -273,7 +274,7 @@ const WomenHealthCalendar = ({ patientId }) => {
         const dateToUse = dateObj || selectedDate;
         if (!dateToUse) return;
         try {
-            await axios.post(
+            const res = await axios.post(
                 `${import.meta.env.VITE_SERVER_URL}/api/womenhealth/period-day`,
                 {
                     userId: patientId,
@@ -281,6 +282,7 @@ const WomenHealthCalendar = ({ patientId }) => {
                     action,
                 }
             );
+            console.log(res);
             toast.success("Saved!");
             setPeriodAction(null);
             fetchPeriodData();

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useUser, useAuth } from '@clerk/clerk-react';
+import { useUser } from '../../../context/UserContext';
 import axios from 'axios';
 import {
     Calendar,
@@ -21,6 +21,7 @@ import {
     FileText
 } from 'lucide-react';
 import PostCard from "../../../components/Doctor/PostCard";
+import { auth } from '../../../config/config';
 
 const AllArticles = () => {
     const [articles, setArticles] = useState([]);
@@ -29,18 +30,20 @@ const AllArticles = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const { user } = useUser();
-    const { getToken } = useAuth();
 
     useEffect(() => {
-        if (user?.id) {
+        if (user?.uid) {
             fetchAllArticles();
         }
     }, [user]);
 
+    console.log(user);
+
     const fetchAllArticles = async () => {
         try {
             setLoading(true);
-            const token = await getToken();
+            const token = await auth.currentUser.getIdToken();
+            console.log(token); 
             const response = await axios.get(
                 `${import.meta.env.VITE_SERVER_URL}/api/articles/all`,
                 {
@@ -49,7 +52,7 @@ const AllArticles = () => {
                     },
                 }
             );
-
+            console.log(response);
             if (response.data.success) {
                 setArticles(response.data.data);
             }

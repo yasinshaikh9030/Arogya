@@ -1,4 +1,3 @@
-import { useAuth, useUser } from "@clerk/clerk-react";
 import axios from "axios";
 import {
     Activity,
@@ -22,6 +21,8 @@ import React, { useEffect, useState } from "react";
 import Calendar from "../../../components/Dashboard/Calendar";
 import Loader from "../../../components/main/Loader";
 import { useNavigate } from "react-router-dom";
+import { useUser } from "../../../context/UserContext";
+import { auth } from "../../../config/config";
 
 const PatientDashboardContent = () => {
     const [userData, setUserData] = useState(null);
@@ -33,14 +34,13 @@ const PatientDashboardContent = () => {
     const [savingMap, setSavingMap] = useState({});
 
     const { user } = useUser();
-    const { getToken } = useAuth();
     const [locationSaved, setLocationSaved] = useState(false);
 
     const navigate = useNavigate();
 
     useEffect(() => {
         fetchUserData();
-    }, [user, getToken]);
+    }, [user]);
 
     // Save location once when component renders (only if not already saved)
     useEffect(() => {
@@ -73,9 +73,11 @@ const PatientDashboardContent = () => {
                 console.log("Location obtained:", latitude, longitude);
 
                 // Save to backend
-                const token = await getToken();
+                const token = await user.getIdToken();
                 await axios.put(
-                    `${import.meta.env.VITE_SERVER_URL}/api/patient/${user.id
+
+                    `${import.meta.env.VITE_SERVER_URL}/api/patient/${
+                        user.uid
                     }/location`,
                     { latitude, longitude },
                     {
@@ -111,15 +113,19 @@ const PatientDashboardContent = () => {
         if (userData && !locationSaved) {
             saveLocation();
         }
-    }, [user, userData, locationSaved, getToken]);
+    }, [user, userData, locationSaved]);
 
     const fetchUserData = async () => {
         if (!user) return;
         try {
             setLoading(true);
-            const token = await getToken();
+            const token = await auth.currentUser.getIdToken();
+            console.log(auth.currentUser);
+            console.log(token);
             const response = await axios.get(
-                `${import.meta.env.VITE_SERVER_URL}/api/patient/get-patient/${user.id
+
+                `${import.meta.env.VITE_SERVER_URL}/api/patient/get-patient/${
+                    user.uid
                 }`,
                 {
                     headers: {
@@ -127,6 +133,7 @@ const PatientDashboardContent = () => {
                     },
                 }
             );
+            // console.log(response);
             setUserData(response.data);
         } catch (error) {
             console.error(
@@ -172,11 +179,13 @@ const PatientDashboardContent = () => {
     const openMedicationModal = async () => {
         setMedOpen(true);
         try {
-            const token = await getToken();
+            const token = await user.getIdToken();
 
             // Fetch appointments (to collect prescriptions)
             const apptRes = await axios.get(
-                `${import.meta.env.VITE_SERVER_URL}/api/appointment/patient/${user.id
+
+                `${import.meta.env.VITE_SERVER_URL}/api/appointment/patient/${
+                    user.uid
                 }`,
                 {
                     headers: { Authorization: `Bearer ${token}` },
@@ -210,7 +219,9 @@ const PatientDashboardContent = () => {
 
             // Fetch already saved reminders
             const rRes = await axios.get(
-                `${import.meta.env.VITE_SERVER_URL}/api/patient/${user.id
+
+                `${import.meta.env.VITE_SERVER_URL}/api/patient/${
+                    user.uid
                 }/reminders`,
                 {
                     headers: { Authorization: `Bearer ${token}` },
@@ -231,16 +242,19 @@ const PatientDashboardContent = () => {
         <div className="min-h-screen bg-gradient-to-br from-light-background to-light-background-secondary dark:from-dark-background dark:to-dark-background-secondary">
             <div className="max-w-8xl mx-auto md:px-0 px-3">
                 {/* Enhanced Header with Gradient */}
-                <div className="relative mb-4 overflow-hidden rounded-3xl dark:bg-dark-bg bg-light-surface md:p-6 p-4 text-light-primary-text dark:text-dark-primary-text">
-                    <div className="relative z-10 flex items-center gap-4 md:gap-6">
-                        <div className="relative">
-                            <img
-                                src={user.imageUrl}
-                                alt="Profile"
-                                className="h-16 w-16 md:h-20 md:w-20 rounded-full object-cover border-4 border-white/30 shadow-lg"
-                            />
-                            <div className="absolute -bottom-0 -right-0 w-7 h-7 bg-dark-surface rounded-full flex items-center justify-center">
-                                <CheckCircle className="w-4 h-4 text-white" />
+
+                <div className="relative mb-4 overflow-hidden rounded-3xl dark:bg-dark-bg bg-light-surface md:p-8 p-4 text-light-primary-text dark:text-dark-primary-text">
+                    <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                        <div className="flex md:flex-row flex-col items-center space-x-6 mb-6 lg:mb-0">
+                            <div className="relative">
+                                <img
+                                    src={user.photoURL}
+                                    alt="Profile"
+                                    className="md:w-30 md:h-30 h-20 w-20 rounded-full object-cover border-4 border-white/30 shadow-lg"
+                                />
+                                <div className="absolute -bottom-0 -right-0 w-8 h-8 bg-dark-surface rounded-full flex items-center justify-center">
+                                    <CheckCircle className="w-5 h-5 text-white" />
+                                </div>
                             </div>
                         </div>
                         <div className="flex flex-col gap-1">
@@ -721,7 +735,7 @@ const PatientDashboardContent = () => {
                                     Patient ID:
                                 </p>
                                 <p className="text-sm font-semibold text-light-primary-text dark:text-dark-primary-text truncate">
-                                    {userData._id}
+                                    {userData.patientId}
                                 </p>
                             </div>
                             <div className="p-3 rounded-xl bg-light-background dark:bg-dark-background">
@@ -729,7 +743,7 @@ const PatientDashboardContent = () => {
                                     User ID:
                                 </p>
                                 <p className="text-sm font-semibold text-light-primary-text dark:text-dark-primary-text truncate">
-                                    {user.id}
+                                    {user.uid}
                                 </p>
                             </div>
                             <div className="p-3 rounded-xl bg-light-background dark:bg-dark-background">

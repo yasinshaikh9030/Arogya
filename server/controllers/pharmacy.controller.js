@@ -2,6 +2,8 @@
 
 const Pharmacy = require("../schema/pharmacy.schema");
 
+
+
 // Create a new pharmacy
 exports.createPharmacy = async (req, res) => {
     try {
@@ -21,9 +23,8 @@ exports.createPharmacy = async (req, res) => {
             operatingHours,
             services,
             description,
+            clerkUserId
         } = req.body;
-
-        const clerkUserId = req.auth?.userId;
 
         if (
             !pharmacyName ||

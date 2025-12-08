@@ -25,7 +25,7 @@ import {
     Settings2,
     AlertTriangle,
 } from "lucide-react";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "./context/UserContext";
 import { useEffect } from "react";
 import {
     BrowserRouter,
@@ -199,6 +199,7 @@ const adminTabs = [
 
 const VideoAppointmentEntry = () => {
     const { user, isLoaded } = useUser();
+    console.log("user", user);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -210,8 +211,8 @@ const VideoAppointmentEntry = () => {
         }
 
         const role = (
-            user.unsafeMetadata?.role ||
-            user.publicMetadata?.role ||
+            user.metadata?.role ||
+            user.metadata?.role ||
             "patient"
         ).toString();
         const normalized = role.toLowerCase();

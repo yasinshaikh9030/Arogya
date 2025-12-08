@@ -1,4 +1,3 @@
-import { UserButton, useUser } from "@clerk/clerk-react";
 import {
     PanelLeftClose,
     PanelLeftOpen,
@@ -6,6 +5,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import UserButton from "./auth/UserButton";
+import { useUser } from "../context/UserContext";
 
 const Sidebar = ({ tabs }) => {
     const { user } = useUser();
@@ -125,13 +126,7 @@ const Sidebar = ({ tabs }) => {
                     className={`flex items-center md:justify-center justify-start px-2 transition-all duration-300 ease-in-out`}>
                     {!isCollapsed ? (
                         <div className="flex items-center md:justify-center justify-start gap-2 overflow-hidden">
-                            <UserButton
-                                appearance={{
-                                    elements: {
-                                        userButtonAvatarBox: "w-12 h-12",
-                                    },
-                                }}
-                            />
+                            <UserButton/>
                             <p className="font-medium md:text-base text-lg whitespace-nowrap transition-all duration-300 ease-in-out">
                                 {user.fullName ||
                                     user.firstName + user.lastName}
