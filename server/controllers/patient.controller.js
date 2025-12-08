@@ -3,6 +3,7 @@ const { translate } = require("@vitalets/google-translate-api");
 const { sendSms } = require("../config/sms.config");
 const Patient = require("../schema/patient.schema");
 const cloudinary = require("../config/cloudinary");
+const { generatePrompt } = require("../config/ai.config");
 
 exports.createPatient = async (req, res) => {
     const {
@@ -261,6 +262,223 @@ exports.getPatientWithEvents = async (req, res) => {
         res.json(patient);
     } catch (err) {
         res.status(400).json({ error: err.message });
+    }
+};
+
+// Get detailed medical history for a patient by clerkUserId
+exports.getMedicalHistory = async (req, res) => {
+    try {
+        const { clerkUserId } = req.params;
+        if (!clerkUserId) {
+            return res.status(400).json({
+                success: false,
+                message: "Missing clerkUserId",
+            });
+        }
+
+        const patient = await Patient.findOne({ clerkUserId });
+        if (!patient) {
+            return res.status(404).json({
+                success: false,
+                message: "Patient not found",
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                medicalHistory: patient.medicalHistory || "",
+                alergies: patient.alergies || [],
+                operations: patient.operations || [],
+                ongoingMedications: patient.ongoingMedications || [],
+                permanentMedications: patient.permanentMedications || [],
+                majorDiseases: patient.majorDiseases || [],
+                disabilities: patient.disabilities || [],
+                documents: patient.medicalHistoryDocuments || [],
+                summary: patient.medicalHistorySummary || "",
+            },
+        });
+    } catch (err) {
+        console.error("[patient.getMedicalHistory] error", err.message || err);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to fetch medical history",
+            error: err.message,
+        });
+    }
+};
+
+// Helper to upload a buffer to Cloudinary (reused for medical docs)
+async function uploadBufferToCloud(buffer, folder = "patient_docs") {
+    const uploadResult = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+            { resource_type: "auto", folder },
+            (error, result) => {
+                if (error) return reject(error);
+                resolve(result);
+            }
+        );
+        stream.end(buffer);
+    });
+    return uploadResult?.secure_url || "";
+}
+
+// Upsert medical history details and regenerate AI summary
+exports.upsertMedicalHistory = async (req, res) => {
+    try {
+        const { clerkUserId } = req.params;
+        if (!clerkUserId) {
+            return res.status(400).json({
+                success: false,
+                message: "Missing clerkUserId",
+            });
+        }
+
+        const patient = await Patient.findOne({ clerkUserId });
+        if (!patient) {
+            return res.status(404).json({
+                success: false,
+                message: "Patient not found",
+            });
+        }
+
+        const body = req.body || {};
+
+        if (typeof body.medicalHistory === "string") {
+            patient.medicalHistory = body.medicalHistory.trim();
+        }
+
+        const normalizeArray = (val) => {
+            if (!val) return [];
+            if (Array.isArray(val)) return val.map((v) => String(v).trim()).filter(Boolean);
+            return String(val)
+                .split(",")
+                .map((v) => v.trim())
+                .filter(Boolean);
+        };
+
+        if (body.alergies !== undefined) {
+            patient.alergies = normalizeArray(body.alergies);
+        }
+        if (body.operations !== undefined) {
+            patient.operations = normalizeArray(body.operations);
+        }
+        if (body.ongoingMedications !== undefined) {
+            patient.ongoingMedications = normalizeArray(body.ongoingMedications);
+        }
+        if (body.permanentMedications !== undefined) {
+            patient.permanentMedications = normalizeArray(body.permanentMedications);
+        }
+        if (body.majorDiseases !== undefined) {
+            patient.majorDiseases = normalizeArray(body.majorDiseases);
+        }
+        if (body.disabilities !== undefined) {
+            patient.disabilities = normalizeArray(body.disabilities);
+        }
+
+        if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+            for (const file of req.files) {
+                try {
+                    const url = await uploadBufferToCloud(file.buffer, "patient_medical_history");
+                    if (url) {
+                        patient.medicalHistoryDocuments.push({
+                            title: file.originalname,
+                            type: file.mimetype || "document",
+                            fileUrl: url,
+                        });
+                    }
+                } catch (err) {
+                    console.error("[patient.upsertMedicalHistory] doc upload failed", err.message || err);
+                }
+            }
+        }
+
+        // Build prompt for AI summary
+        const joinOrNone = (arr) =>
+            Array.isArray(arr) && arr.length ? arr.join(", ") : "None";
+
+        const docTitles = (patient.medicalHistoryDocuments || []).map((d) => d.title || d.fileUrl);
+
+        const prompt = `You are summarising a patient's long-term medical history for clinicians.
+Use ONLY the data below. Do NOT give management advice, prescriptions, or patient-facing instructions.
+
+Patient basic data:
+- Name: ${patient.fullName || "N/A"}
+- Age (approx): ${patient.dob ? Math.max(0, Math.floor((Date.now() - new Date(patient.dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000))) : "N/A"}
+- Gender: ${patient.gender || "N/A"}
+
+Medical history details:
+- Free-text history: ${patient.medicalHistory || "None"}
+- Allergies: ${joinOrNone(patient.alergies)}
+- Operations / surgeries: ${joinOrNone(patient.operations)}
+- Ongoing medications: ${joinOrNone(patient.ongoingMedications)}
+- Permanent medications: ${joinOrNone(patient.permanentMedications)}
+- Major chronic diseases: ${joinOrNone(patient.majorDiseases)}
+- Disabilities: ${joinOrNone(patient.disabilities)}
+- Attached documents (titles only): ${joinOrNone(docTitles)}
+
+Required output format:
+- Return plain text that looks like a simple document, not code.
+- Use short section titles written as normal lines of text, for example:
+  Medical history summary
+  Key chronic conditions and history
+  Clinical overview
+  Precautions and flags
+- Under each section title, use only hyphen-minus characters at the start of bullet lines for lists. Do not use asterisks for bullets or decoration.
+- Do not wrap any text in double or single asterisks for bold or italic; keep all text plain.
+
+Content structure:
+1. Start with a short line that is the overall title, such as: Medical history summary.
+2. Then add a section titled Key chronic conditions and history with 4–6 bullet points covering chronic conditions, surgeries, allergies, disabilities, and long-term medications.
+3. Then add a section titled Clinical overview with a 1–2 line paragraph.
+4. Then add a section titled Precautions and flags with 3–5 bullet points (for example allergies and important comorbidities).
+
+Keep it concise and clinician-focused.`;
+
+        let summary = patient.medicalHistorySummary || "";
+        let summaryRefreshed = false;
+        try {
+            const aiResult = await generatePrompt(prompt);
+            if (typeof aiResult === "string" && aiResult.trim()) {
+                // Normalise to clean Markdown: replace any leading `*` bullets with `-`
+                // and strip decorative bold markers, if the model still returns them.
+                let cleaned = aiResult.trim();
+                cleaned = cleaned.replace(/^\s*\*\s+/gm, "- ");
+                cleaned = cleaned.replace(/\*\*(.+?)\*\*/g, "$1");
+                cleaned = cleaned.replace(/\*(.+?)\*/g, "$1");
+
+                summary = cleaned;
+                patient.medicalHistorySummary = summary;
+                summaryRefreshed = true;
+            }
+        } catch (err) {
+            console.error("[patient.upsertMedicalHistory] AI summary failed", err.message || err);
+        }
+
+        await patient.save();
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                medicalHistory: patient.medicalHistory || "",
+                alergies: patient.alergies || [],
+                operations: patient.operations || [],
+                ongoingMedications: patient.ongoingMedications || [],
+                permanentMedications: patient.permanentMedications || [],
+                majorDiseases: patient.majorDiseases || [],
+                disabilities: patient.disabilities || [],
+                documents: patient.medicalHistoryDocuments || [],
+                summary: patient.medicalHistorySummary || "",
+                summaryRefreshed,
+            },
+        });
+    } catch (err) {
+        console.error("[patient.upsertMedicalHistory] error", err.message || err);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to update medical history",
+            error: err.message,
+        });
     }
 };
 

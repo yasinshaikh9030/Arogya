@@ -124,6 +124,18 @@ const GetAppointmentContent = () => {
     const [userMetadata, setUserMetadata] = useState(user.unsafeMetadata || {});
     const [isBooking, setIsBooking] = useState(false);
 
+    // ML recommendation inputs
+    const [mlSymptoms, setMlSymptoms] = useState([]);
+    const [mlSymptomInput, setMlSymptomInput] = useState("");
+    const [mlVitals, setMlVitals] = useState({
+        temperature: "",
+        spo2: "",
+        systolic_bp: "",
+        pulse: "",
+    });
+    const [isRecommending, setIsRecommending] = useState(false);
+    const [mlMeta, setMlMeta] = useState(null);
+
     useEffect(() => {
         if (!user) return;
         let mounted = true;
@@ -156,6 +168,90 @@ const GetAppointmentContent = () => {
 
         // No pre-click revalidation; rely on 5s refresh and conflict removal on booking
     }, [user, getToken]);
+
+    const addMlSymptom = () => {
+        const value = mlSymptomInput.trim();
+        if (!value) return;
+        setMlSymptoms((prev) =>
+            prev.includes(value) ? prev : [...prev, value]
+        );
+        setMlSymptomInput("");
+    };
+
+    const removeMlSymptom = (symptom) => {
+        setMlSymptoms((prev) => prev.filter((s) => s !== symptom));
+    };
+
+    const handleMlSymptomKeyDown = (event) => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            addMlSymptom();
+        }
+    };
+
+    const handleMlVitalChange = (field, value) => {
+        setMlVitals((prev) => ({ ...prev, [field]: value }));
+    };
+
+    const handleGetRecommendations = async () => {
+        if (!user) return;
+        const allSymptoms = mlSymptoms.length ? mlSymptoms : appointmentForm.symptoms;
+        if (!allSymptoms.length) {
+            toast.error("Please add at least one symptom for recommendations.");
+            return;
+        }
+
+        const normalizeSymptom = (s) =>
+            s
+                .toLowerCase()
+                .trim()
+                .replace(/\s+/g, "_")
+                .replace(/[^a-z_]/g, "");
+
+        const payload = {
+            patientId: user.id,
+            symptoms: allSymptoms.map(normalizeSymptom),
+        };
+
+        const t = parseFloat(mlVitals.temperature);
+        const spo2Val = parseInt(mlVitals.spo2, 10);
+        const bpVal = parseInt(mlVitals.systolic_bp, 10);
+        const pulseVal = parseInt(mlVitals.pulse, 10);
+
+        if (!Number.isNaN(t)) payload.temperature = t;
+        if (!Number.isNaN(spo2Val)) payload.spo2 = spo2Val;
+        if (!Number.isNaN(bpVal)) payload.systolic_bp = bpVal;
+        if (!Number.isNaN(pulseVal)) payload.pulse = pulseVal;
+
+        try {
+            setIsRecommending(true);
+            const token = await getToken();
+            const res = await axios.post(
+                `${import.meta.env.VITE_SERVER_URL}/api/appointment/recommend-doctors`,
+                payload,
+                token
+                    ? {
+                          headers: { Authorization: `Bearer ${token}` },
+                      }
+                    : undefined
+            );
+
+            const data = res.data?.data || {};
+            if (Array.isArray(data.doctors) && data.doctors.length) {
+                setDoctors(data.doctors);
+                setMlMeta(data.ml || null);
+                toast.success("Updated doctor list based on your symptoms.");
+            } else {
+                toast("No specific matches found, showing general doctors.");
+                setMlMeta(data.ml || null);
+            }
+        } catch (e) {
+            console.error(e?.response?.data || e);
+            toast.error("Failed to get doctor recommendations.");
+        } finally {
+            setIsRecommending(false);
+        }
+    };
 
     const validateAppointmentDate = (date, time) => {
         if (!date || !time)
@@ -435,7 +531,7 @@ const GetAppointmentContent = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-light-background to-light-background-secondary dark:from-dark-background dark:to-dark-background-secondary">
             <div className="max-w-7xl mx-auto p-6">
-                <div className="mb-6">
+                <div className="mb-6 space-y-4">
                     <h1 className="text-3xl font-bold text-light-primary-text dark:text-dark-primary-text">
                         Find a Verified Doctor
                     </h1>
@@ -443,7 +539,173 @@ const GetAppointmentContent = () => {
                         All doctors listed below are identity-verified and
                         available for appointments.
                     </p>
+
+                    <div className="mt-4 rounded-2xl bg-light-surface dark:bg-dark-bg border border-light-secondary-text/20 dark:border-dark-secondary-text/20 p-4 space-y-4">
+                        <div className="flex items-center justify-between gap-2">
+                            <div>
+                                <p className="text-xl font-semibold text-light-primary-text dark:text-dark-primary-text">
+                                    Describe your problem
+                                </p>
+                                <p className="text-md text-light-secondary-text dark:text-dark-secondary-text">
+                                    Enter symptoms and (optionally) vitals so our AI model can suggest the most relevant specialists.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div>
+                                <p className="text-lg font-medium text-light-primary-text dark:text-dark-primary-text">
+                                    Symptoms
+                                </p>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    {COMMON_SYMPTOMS.map((symptom) => {
+                                        const active = mlSymptoms.includes(symptom);
+                                        return (
+                                            <button
+                                                type="button"
+                                                key={symptom}
+                                                onClick={() =>
+                                                    setMlSymptoms((prev) =>
+                                                        prev.includes(symptom)
+                                                            ? prev.filter((s) => s !== symptom)
+                                                            : [...prev, symptom]
+                                                    )
+                                                }
+                                                className={`px-3 py-1 rounded-full border text-md transition ${
+                                                    active
+                                                        ? "bg-light-primary text-white border-light-primary"
+                                                        : "bg-light-bg dark:bg-dark-surface text-light-primary-text dark:text-dark-primary-text border-light-secondary-text/30 dark:border-dark-secondary-text/30"
+                                                }`}
+                                            >
+                                                {symptom}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <div className="mt-3 flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="Add a custom symptom"
+                                        value={mlSymptomInput}
+                                        onChange={(e) => setMlSymptomInput(e.target.value)}
+                                        onKeyDown={handleMlSymptomKeyDown}
+                                        className="flex-1 rounded-lg border border-light-secondary-text/20 dark:border-dark-secondary-text/20 bg-light-background dark:bg-dark-background px-3 py-2 text-md text-light-primary-text dark:text-dark-primary-text focus:outline-none focus:ring-2 focus:ring-light-primary dark:focus:ring-dark-primary"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={addMlSymptom}
+                                        className="px-3 py-2 rounded-lg bg-light-primary dark:bg-dark-primary text-white text-sm font-medium"
+                                    >
+                                        Add
+                                    </button>
+                                </div>
+                                {mlSymptoms.length > 0 && (
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                        {mlSymptoms.map((symptom) => (
+                                            <span
+                                                key={symptom}
+                                                className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-light-primary/10 dark:bg-dark-primary/10 text-md text-light-primary dark:text-dark-primary"
+                                            >
+                                                {symptom}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeMlSymptom(symptom)}
+                                                    className="ml-1 text-lg"
+                                                >
+                                                    ×
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div>
+                                    <p className="text-md font-medium text-light-primary-text dark:text-dark-primary-text">
+                                        Temperature (°C)
+                                    </p>
+                                    <input
+                                        type="number"
+                                        placeholder="Optional"
+                                        value={mlVitals.temperature}
+                                        onChange={(e) => handleMlVitalChange("temperature", e.target.value)}
+                                        className="mt-1 w-full rounded-lg border border-light-secondary-text/20 dark:border-dark-secondary-text/20 bg-light-background dark:bg-dark-background px-3 py-2 text-md text-light-primary-text dark:text-dark-primary-text focus:outline-none focus:ring-2 focus:ring-light-primary dark:focus:ring-dark-primary"
+                                    />
+                                </div>
+                                <div>
+                                    <p className="text-md font-medium text-light-primary-text dark:text-dark-primary-text">
+                                        SpO2 ( % )
+                                    </p>
+                                    <input
+                                        type="number"
+                                        placeholder="Optional"
+                                        value={mlVitals.spo2}
+                                        onChange={(e) => handleMlVitalChange("spo2", e.target.value)}
+                                        className="mt-1 w-full rounded-lg border border-light-secondary-text/20 dark:border-dark-secondary-text/20 bg-light-background dark:bg-dark-background px-3 py-2 text-md text-light-primary-text dark:text-dark-primary-text focus:outline-none focus:ring-2 focus:ring-light-primary dark:focus:ring-dark-primary"
+                                    />
+                                </div>
+                                <div>
+                                    <p className="text-md font-medium text-light-primary-text dark:text-dark-primary-text">
+                                        Systolic BP (mmHg)
+                                    </p>
+                                    <input
+                                        type="number"
+                                        placeholder="Optional"
+                                        value={mlVitals.systolic_bp}
+                                        onChange={(e) => handleMlVitalChange("systolic_bp", e.target.value)}
+                                        className="mt-1 w-full rounded-lg border border-light-secondary-text/20 dark:border-dark-secondary-text/20 bg-light-background dark:bg-dark-background px-3 py-2 text-md text-light-primary-text dark:text-dark-primary-text focus:outline-none focus:ring-2 focus:ring-light-primary dark:focus:ring-dark-primary"
+                                    />
+                                </div>
+                                <div>
+                                    <p className="text-md font-medium text-light-primary-text dark:text-dark-primary-text">
+                                        Pulse (bpm)
+                                    </p>
+                                    <input
+                                        type="number"
+                                        placeholder="Optional"
+                                        value={mlVitals.pulse}
+                                        onChange={(e) => handleMlVitalChange("pulse", e.target.value)}
+                                        className="mt-1 w-full rounded-lg border border-light-secondary-text/20 dark:border-dark-secondary-text/20 bg-light-background dark:bg-dark-background px-3 py-2 text-md text-light-primary-text dark:text-dark-primary-text focus:outline-none focus:ring-2 focus:ring-light-primary dark:focus:ring-dark-primary"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-start gap-3 pt-1">
+                                <button
+                                    type="button"
+                                    onClick={handleGetRecommendations}
+                                    disabled={isRecommending}
+                                    className={`px-4 py-2 rounded-lg text-sm font-semibold text-white bg-light-primary dark:bg-dark-primary hover:bg-light-primary-dark dark:hover:bg-dark-primary-dark transition ${
+                                        isRecommending ? "opacity-70 cursor-not-allowed" : ""
+                                    }`}
+                                >
+                                    {isRecommending ? "Getting recommendations..." : "Get doctor recommendations"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                {mlMeta?.urgency && (
+                    <div className="mb-4 rounded-xl border border-light-secondary-text/30 dark:border-dark-secondary-text/30 bg-light-surface dark:bg-dark-bg px-4 py-3 text-md text-light-primary-text dark:text-dark-primary-text">
+                        {mlMeta.urgency === "A" && (
+                            <span>
+                                Based on your symptoms, we recommend an <span className="font-semibold"> <span className="text-red-500">offline</span>  clinic visit as soon as possible</span>.
+                            </span>
+                        )}
+                        {mlMeta.urgency === "B" && (
+                            <span>
+                                Your case appears <span className="font-semibold">moderate</span>; an online consultation is reasonable, but an offline visit is also appropriate.
+                            </span>
+                        )}
+                        {mlMeta.urgency === "C" && (
+                            <span>
+                                Your case appears <span className="font-semibold">low urgency</span>; an <span className="font-semibold text-green-400">online consultation</span> should be sufficient.
+                            </span>
+                        )}
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {doctors.map((doc) => (
@@ -757,29 +1019,11 @@ const GetAppointmentContent = () => {
                                     </div>
                                 )}
                             </div>
-                            <div>
-                                <p className="text-sm font-medium text-light-primary-text dark:text-dark-primary-text">
-                                    Reports / Previous Diagnosis (Optional)
-                                </p>
-                                <textarea
-                                    rows={3}
-                                    value={appointmentForm.reports}
-                                    onChange={(e) =>
-                                        handleAppointmentFormChange(
-                                            "reports",
-                                            e.target.value
-                                        )
-                                    }
-                                    className="mt-2 w-full rounded-lg border border-light-secondary-text/20 dark:border-dark-secondary-text/20 bg-light-background dark:bg-dark-background px-3 py-2 text-light-primary-text dark:text-dark-primary-text focus:outline-none focus:ring-2 focus:ring-light-primary dark:focus:ring-dark-primary"
-                                    placeholder="Share any important medical history, lab results, or recent observations."
-                                />
-                            </div>
-
                             <div className="col-span-full">
                                 <p
                                     htmlFor="patient-report"
                                     className="block text-sm/6 font-medium text-light-primary-text dark:text-dark-primary-text">
-                                    Upload Relevant Medical File (Optional)
+                                    Upload Medical Summary PDF / Reports (Optional)
                                 </p>
                                 <div className="mt-1">
                                     <div className="flex justify-center rounded-lg border border-dashed border-light-secondary-text/25 dark:border-dark-secondary-text/25 px-6 py-10">
@@ -793,14 +1037,13 @@ const GetAppointmentContent = () => {
                                                     htmlFor="patient-report"
                                                     className="relative cursor-pointer rounded-md bg-transparent font-semibold text-light-primary dark:text-dark-primary">
                                                     <span className="text-light-secondary dark:text-dark-secondary font-bold">
-                                                        Upload Relevant Medical
-                                                        File
+                                                        Upload PDF or image
                                                     </span>
                                                     <input
                                                         id="patient-report"
                                                         name="patient-report"
                                                         type="file"
-                                                        accept=".jpg,.jpeg,.png"
+                                                        accept=".pdf,.jpg,.jpeg,.png"
                                                         onChange={(e) =>
                                                             setAppointmentForm({
                                                                 ...appointmentForm,
@@ -815,7 +1058,7 @@ const GetAppointmentContent = () => {
                                                 </label>
                                             </div>
                                             <p className="text-xs/5 text-light-secondary-text dark:text-dark-secondary-text">
-                                                PDF, JPG, PNG up to 10MB
+                                                Export your medical history summary as PDF from the Medical History tab and upload it here, or attach any relevant report (PDF/JPG/PNG, up to 10MB).
                                             </p>
                                             {appointmentForm.reportFile && (
                                                 <p className="mt-2 text-sm text-light-success dark:text-dark-success">

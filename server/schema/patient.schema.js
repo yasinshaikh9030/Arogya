@@ -136,6 +136,28 @@ const patientSchema = new mongoose.Schema(
             trim: true,
         },
 
+        disabilities: {
+            type: [String],
+            default: [],
+            trim: true,
+        },
+
+        medicalHistoryDocuments: [
+            {
+                title: { type: String, trim: true },
+                type: { type: String, trim: true },
+                fileUrl: { type: String, trim: true },
+                uploadedAt: { type: Date, default: Date.now },
+            },
+        ],
+
+        medicalHistorySummary: {
+            type: String,
+            trim: true,
+            maxlength: [4000, "Medical history summary cannot exceed 4000 characters"],
+            default: "",
+        },
+
         telemedicineConsent: {
             type: Boolean,
             required: [true, "Telemedicine consent is required"],

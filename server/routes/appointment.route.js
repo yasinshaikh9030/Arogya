@@ -8,12 +8,13 @@ const Doctor = require("../schema/doctor.schema");
 const Event = require("../schema/event.schema");
 const Rating = require("../schema/rating.schema");
 const cloudinary = require("../config/cloudinary");
+const axios = require("axios");
 
 const multer = require("multer");
 const { sendSms } = require("../config/sms.config");
 const { translate } = require("@vitalets/google-translate-api");
 const upload = multer({ storage: multer.memoryStorage() });
-
+const mlModelUrl = process.env.ML_MODEL || "https://medicomodel.onrender.com/predict"
 // POST /api/appointment - create with minimal fields
 router.post(
     "/create-appointment",
@@ -188,6 +189,113 @@ router.post(
         }
     }
 );
+
+// POST /api/appointment/recommend-doctors - use ML model to suggest doctors based on symptoms & vitals
+router.post("/recommend-doctors", async (req, res) => {
+    try {
+        const {
+            patientId, // Clerk user id (same as used on frontend elsewhere)
+            symptoms = [],
+            temperature,
+            spo2,
+            systolic_bp,
+            pulse,
+        } = req.body || {};
+
+        if (!patientId) {
+            return res
+                .status(400)
+                .json({ success: false, message: "Missing patientId (clerk user id)" });
+        }
+
+        const patient = await Patient.findOne({ clerkUserId: patientId });
+        if (!patient) {
+            return res
+                .status(404)
+                .json({ success: false, message: "Patient not found" });
+        }
+
+        const dob = patient.dob ? new Date(patient.dob) : null;
+        let age = 30;
+        if (dob && !isNaN(dob.getTime())) {
+            const diffMs = Date.now() - dob.getTime();
+            age = Math.max(0, Math.floor(diffMs / (365.25 * 24 * 60 * 60 * 1000)));
+        }
+
+        let sex = "O";
+        if (patient.gender === "male") sex = "M";
+        else if (patient.gender === "female") sex = "F";
+
+        const previousAppointmentExists = await Appointment.exists({ patientId: patient._id });
+        const is_new = previousAppointmentExists ? 0 : 1;
+
+        const normalizedSymptoms = Array.isArray(symptoms)
+            ? symptoms
+                  .map((s) =>
+                      typeof s === "string"
+                          ? s
+                                .toLowerCase()
+                                .trim()
+                                .replace(/\s+/g, "_")
+                                .replace(/[^a-z_]/g, "")
+                          : ""
+                  )
+                  .filter(Boolean)
+            : [];
+
+        const payload = {
+            symptoms: normalizedSymptoms,
+            age,
+            sex,
+            temperature: typeof temperature === "number" ? temperature : undefined,
+            spo2: typeof spo2 === "number" ? spo2 : undefined,
+            systolic_bp:
+                typeof systolic_bp === "number" ? systolic_bp : undefined,
+            pulse: typeof pulse === "number" ? pulse : undefined,
+            is_new,
+        };
+
+        const mlResponse = await axios.post(
+            mlModelUrl,
+            payload,
+            { timeout: 10000 }
+        );
+
+        const mlData = mlResponse.data || {};
+        const specialistKey = (mlData.specialist || "general").toLowerCase();
+
+        const specialistMap = {
+            cardiology: "Cardiology",
+            neurology: "Neurology",
+            gastroenterology: "Gastroenterology",
+            ent: "other",
+            orthopedics: "Orthopedics",
+            general: "General Practice",
+        };
+
+        const mappedSpecialty = specialistMap[specialistKey] || "General Practice";
+
+        const doctors = await Doctor.find({
+            specialty: mappedSpecialty,
+            verificationStatus: "verified",
+        });
+
+        return res.json({
+            success: true,
+            data: {
+                ml: mlData,
+                doctors,
+            },
+        });
+    } catch (error) {
+        console.error("recommend-doctors error:", error?.response?.data || error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to get doctor recommendations",
+            error: error.message,
+        });
+    }
+});
 
 // GET /api/appointment/patient/:clerkUserId - get all appointments for a patient
 router.get("/patient/:clerkUserId", async (req, res) => {
