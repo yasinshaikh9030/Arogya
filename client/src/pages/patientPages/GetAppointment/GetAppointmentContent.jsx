@@ -123,6 +123,7 @@ const GetAppointmentContent = () => {
     const [loadingSlots, setLoadingSlots] = useState(false);
     const [userMetadata, setUserMetadata] = useState(user.unsafeMetadata || {});
     const [isBooking, setIsBooking] = useState(false);
+    const today = new Date().toISOString().split("T")[0];
 
     useEffect(() => {
         if (!user) return;
@@ -581,6 +582,7 @@ const GetAppointmentContent = () => {
                                     </p>
                                     <input
                                         type="date"
+                                        min={today}
                                         value={appointmentForm.date}
                                         onChange={(e) =>
                                             handleAppointmentFormChange(
