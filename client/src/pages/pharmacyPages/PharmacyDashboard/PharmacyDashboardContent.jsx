@@ -52,8 +52,7 @@ const PharmacyDashboardContent = (props) => {
             setLoading(true);
             const token = await getToken();
             const response = await axios.get(
-                `${import.meta.env.VITE_SERVER_URL}/api/pharmacy/get-pharmacy/${
-                    user.id
+                `${import.meta.env.VITE_SERVER_URL}/api/pharmacy/get-pharmacy/${user.id
                 }`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -73,8 +72,7 @@ const PharmacyDashboardContent = (props) => {
 
                 try {
                     const locationRes = await axios.get(
-                        `${
-                            import.meta.env.VITE_SERVER_URL
+                        `${import.meta.env.VITE_SERVER_URL
                         }/api/pharmacyLocation/${pharmacy._id}/location`,
                         { headers: { Authorization: `Bearer ${token}` } }
                     );
@@ -99,7 +97,7 @@ const PharmacyDashboardContent = (props) => {
                             });
                         }
                     }
-                } catch {}
+                } catch { }
 
                 console.log("Fetched pharmacy data:", pharmacy);
             }
@@ -124,6 +122,69 @@ const PharmacyDashboardContent = (props) => {
         if (hour < 12) return "Good morning";
         if (hour < 17) return "Good afternoon";
         return "Good evening";
+    };
+
+    const handleLocationChange = async (updatedLocation) => {
+        if (!pharmacyData?._id) return;
+
+        const payload = {
+            latitude: updatedLocation.latitude,
+            longitude: updatedLocation.longitude,
+            name:
+                updatedLocation.name ||
+                locationData.name ||
+                pharmacyData.pharmacyName ||
+                "",
+            address:
+                updatedLocation.address ||
+                locationData.address ||
+                pharmacyData.address ||
+                "",
+        };
+
+        try {
+            const token = await getToken();
+            const res = await axios.put(
+                `${import.meta.env.VITE_SERVER_URL}/api/pharmacyLocation/${pharmacyData._id}/location`,
+                payload,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (res.data?.success && res.data.data?.location) {
+                const saved = res.data.data;
+                const coords = Array.isArray(saved.location?.coordinates)
+                    ? saved.location.coordinates
+                    : [];
+                const lng = coords[0];
+                const lat = coords[1];
+
+                if (lat && lng) {
+                    setLocationData({
+                        latitude: lat,
+                        longitude: lng,
+                        name: saved.name || payload.name,
+                        address: saved.address || payload.address,
+                    });
+                    return;
+                }
+            }
+
+            setLocationData((prev) => ({
+                ...prev,
+                latitude: payload.latitude,
+                longitude: payload.longitude,
+                name: payload.name,
+                address: payload.address,
+            }));
+        } catch (err) {
+            console.error(
+                "[PharmacyDashboard] failed to save pharmacy location",
+                err.response?.data || err.message
+            );
+            alert(
+                "Unable to save pharmacy location right now. Please try again in a moment."
+            );
+        }
     };
 
     if (loading) return <Loader />;
@@ -217,7 +278,8 @@ const PharmacyDashboardContent = (props) => {
                         address={locationData.address}
                         height="500px"
                         clickable={true}
-                        onLocationChange={() => {}}
+                        showAddLocation={true}
+                        onLocationChange={handleLocationChange}
                     />
                 </div>
             </div>
@@ -360,14 +422,13 @@ const PharmacyDashboardContent = (props) => {
                                 key={index}
                                 onClick={() =>
                                     navigate(
-                                        `/pharmacy/${
-                                            item.view === "inventory"
-                                                ? "manage-inventory"
-                                                : item.view === "create-bill"
+                                        `/pharmacy/${item.view === "inventory"
+                                            ? "manage-inventory"
+                                            : item.view === "create-bill"
                                                 ? "create-bill"
                                                 : item.view === "bills"
-                                                ? "billing-history"
-                                                : "my-location"
+                                                    ? "billing-history"
+                                                    : "my-location"
                                         }`
                                     )
                                 }
