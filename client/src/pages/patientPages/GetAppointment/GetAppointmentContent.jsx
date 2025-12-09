@@ -169,6 +169,17 @@ const GetAppointmentContent = () => {
         // No pre-click revalidation; rely on 5s refresh and conflict removal on booking
     }, [user, getToken]);
 
+    // Keep appointment symptoms in sync with ML symptoms so the same
+    // symptoms used for doctor recommendations are sent to the doctor
+    useEffect(() => {
+        if (mlSymptoms && mlSymptoms.length) {
+            setAppointmentForm((prev) => ({
+                ...prev,
+                symptoms: mlSymptoms,
+            }));
+        }
+    }, [mlSymptoms]);
+
     const addMlSymptom = () => {
         const value = mlSymptomInput.trim();
         if (!value) return;
@@ -489,32 +500,6 @@ const GetAppointmentContent = () => {
             clearInterval(id);
         };
     }, [bookingModalOpen, selectedDoctor, appointmentForm.date, getToken]);
-
-    const handleAddSymptom = () => {
-        const value = appointmentForm.symptomInput.trim();
-        if (!value) return;
-        setAppointmentForm((prev) => ({
-            ...prev,
-            symptoms: prev.symptoms.includes(value)
-                ? prev.symptoms
-                : [...prev.symptoms, value],
-            symptomInput: "",
-        }));
-    };
-
-    const handleSymptomKeyDown = (event) => {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            handleAddSymptom();
-        }
-    };
-
-    const removeSymptom = (symptom) => {
-        setAppointmentForm((prev) => ({
-            ...prev,
-            symptoms: prev.symptoms.filter((item) => item !== symptom),
-        }));
-    };
 
     if (loading) {
         return <Loader />;
@@ -935,90 +920,9 @@ const GetAppointmentContent = () => {
                                     })}
                                 </div>
                             </div>
-                            <div>
-                                <p className="text-sm font-medium text-light-primary-text dark:text-dark-primary-text">
-                                    Symptoms
-                                </p>
-                                <p className="text-xs text-light-secondary-text dark:text-dark-secondary-text">
-                                    Select common symptoms or add your own.
-                                </p>
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                    {COMMON_SYMPTOMS.map((symptom) => {
-                                        const active =
-                                            appointmentForm.symptoms.includes(
-                                                symptom
-                                            );
-                                        return (
-                                            <button
-                                                type="button"
-                                                key={symptom}
-                                                onClick={() =>
-                                                    active
-                                                        ? removeSymptom(symptom)
-                                                        : setAppointmentForm(
-                                                              (prev) => ({
-                                                                  ...prev,
-                                                                  symptoms: [
-                                                                      ...prev.symptoms,
-                                                                      symptom,
-                                                                  ],
-                                                              })
-                                                          )
-                                                }
-                                                className={`rounded-full px-3 py-1 text-sm capitalize transition ${
-                                                    active
-                                                        ? "bg-light-primary text-white dark:bg-dark-primary"
-                                                        : "bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary"
-                                                }`}>
-                                                {symptom}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                                <div className="mt-3 flex gap-2">
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. fever, headache"
-                                        value={appointmentForm.symptomInput}
-                                        onChange={(e) =>
-                                            handleAppointmentFormChange(
-                                                "symptomInput",
-                                                e.target.value
-                                            )
-                                        }
-                                        onKeyDown={handleSymptomKeyDown}
-                                        className="flex-1 rounded-lg border border-light-secondary-text/20 dark:border-dark-secondary-text/20 bg-light-background dark:bg-dark-background px-3 py-2 text-light-primary-text dark:text-dark-primary-text focus:outline-none focus:ring-2 focus:ring-light-primary dark:focus:ring-dark-primary"
-                                    />
-                                    <button
-                                        onClick={handleAddSymptom}
-                                        className="inline-flex items-center gap-2 rounded-lg bg-light-primary px-4 py-2 text-white hover:bg-light-primary-dark dark:bg-dark-primary dark:hover:bg-dark-primary-dark">
-                                        <Plus className="h-4 w-4" />
-                                        Add
-                                    </button>
-                                </div>
-                                {appointmentForm.symptoms.length > 0 && (
-                                    <div className="mt-3 flex flex-wrap gap-2">
-                                        {appointmentForm.symptoms.map(
-                                            (symptom) => (
-                                                <span
-                                                    key={symptom}
-                                                    className="inline-flex items-center gap-2 rounded-full bg-light-primary/10 px-3 py-1 text-sm text-light-primary dark:bg-dark-primary/20 dark:text-dark-primary">
-                                                    {symptom}
-                                                    <button
-                                                        onClick={() =>
-                                                            removeSymptom(
-                                                                symptom
-                                                            )
-                                                        }
-                                                        className="rounded-full p-1 hover:bg-light-primary/20 dark:hover:bg-dark-primary/20">
-                                                        <X className="h-3 w-3" />
-                                                    </button>
-                                                </span>
-                                            )
-                                        )}
-                                    </div>
-                                )}
-                            </div>
+                            {/* Symptoms are now taken from the ML symptoms section at the top
+                                and synced into appointmentForm.symptoms, so we omit the
+                                duplicate symptom selection inside this booking modal. */}
                             <div className="col-span-full">
                                 <p
                                     htmlFor="patient-report"
