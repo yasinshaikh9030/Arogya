@@ -52,8 +52,7 @@ const PharmacyDashboardContent = (props) => {
             setLoading(true);
             const token = await getToken();
             const response = await axios.get(
-                `${import.meta.env.VITE_SERVER_URL}/api/pharmacy/get-pharmacy/${
-                    user.id
+                `${import.meta.env.VITE_SERVER_URL}/api/pharmacy/get-pharmacy/${user.id
                 }`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -73,8 +72,7 @@ const PharmacyDashboardContent = (props) => {
 
                 try {
                     const locationRes = await axios.get(
-                        `${
-                            import.meta.env.VITE_SERVER_URL
+                        `${import.meta.env.VITE_SERVER_URL
                         }/api/pharmacyLocation/${pharmacy._id}/location`,
                         { headers: { Authorization: `Bearer ${token}` } }
                     );
@@ -99,7 +97,7 @@ const PharmacyDashboardContent = (props) => {
                             });
                         }
                     }
-                } catch {}
+                } catch { }
 
                 console.log("Fetched pharmacy data:", pharmacy);
             }
@@ -107,6 +105,45 @@ const PharmacyDashboardContent = (props) => {
             console.log("Error:", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleLocationChange = async (payload) => {
+        if (!pharmacyData?._id) return;
+
+        const { latitude, longitude, name, address } = payload || {};
+        if (typeof latitude !== "number" || typeof longitude !== "number") {
+            console.warn("[PharmacyDashboard] Invalid coordinates from LeafletMap", payload);
+            return;
+        }
+
+        try {
+            const token = await getToken();
+            await axios.put(
+                `${import.meta.env.VITE_SERVER_URL}/api/pharmacyLocation/${pharmacyData._id}/location`,
+                {
+                    latitude,
+                    longitude,
+                    name: name || pharmacyData.pharmacyName || "",
+                    address: address || pharmacyData.address || "",
+                },
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                }
+            );
+
+            setLocationData((prev) => ({
+                ...prev,
+                latitude,
+                longitude,
+                name: name || prev.name || pharmacyData.pharmacyName || "",
+                address: address || prev.address || pharmacyData.address || "",
+            }));
+        } catch (error) {
+            console.error(
+                "[PharmacyDashboard] Failed to update pharmacy location:",
+                error.response?.data || error.message
+            );
         }
     };
 
@@ -217,7 +254,8 @@ const PharmacyDashboardContent = (props) => {
                         address={locationData.address}
                         height="500px"
                         clickable={true}
-                        onLocationChange={() => {}}
+                        showAddLocation={true}
+                        onLocationChange={handleLocationChange}
                     />
                 </div>
             </div>
@@ -360,14 +398,13 @@ const PharmacyDashboardContent = (props) => {
                                 key={index}
                                 onClick={() =>
                                     navigate(
-                                        `/pharmacy/${
-                                            item.view === "inventory"
-                                                ? "manage-inventory"
-                                                : item.view === "create-bill"
+                                        `/pharmacy/${item.view === "inventory"
+                                            ? "manage-inventory"
+                                            : item.view === "create-bill"
                                                 ? "create-bill"
                                                 : item.view === "bills"
-                                                ? "billing-history"
-                                                : "my-location"
+                                                    ? "billing-history"
+                                                    : "my-location"
                                         }`
                                     )
                                 }

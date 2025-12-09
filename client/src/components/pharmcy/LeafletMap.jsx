@@ -152,6 +152,25 @@ export default function LeafletMap({
         });
     };
 
+    const handleUseBrowserLocation = () => {
+        if (!navigator.geolocation) {
+            alert("Geolocation is not supported by your browser.");
+            return;
+        }
+
+        console.log("[LeafletMap] requesting current position from Use my current location button");
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const { latitude: lat, longitude: lng } = pos.coords;
+                console.log("[LeafletMap] received current position", { lat, lng });
+                updateFromCoords(lat, lng, true);
+            },
+            (err) => {
+                console.warn("[LeafletMap] failed to get current position", err);
+            }
+        );
+    };
+
     const handleSaveLocation = () => {
         if (!formData.name || !formData.address) {
             alert("Please fill in name and address before saving.");
@@ -379,6 +398,14 @@ export default function LeafletMap({
                                 />
                             </div>
                         </div>
+
+                        <button
+                            type="button"
+                            onClick={handleUseBrowserLocation}
+                            className="mt-2 inline-flex items-center px-3 py-1.5 rounded-md text-xs bg-[var(--color-light-primary)]/10 dark:bg-[var(--color-dark-primary)]/20 text-[var(--color-light-primary)] dark:text-[var(--color-dark-primary)] hover:bg-[var(--color-light-primary)]/20 dark:hover:bg-[var(--color-dark-primary)]/30"
+                        >
+                            Use my current location
+                        </button>
 
                         <p className="text-xs text-gray-600 dark:text-gray-300 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-md px-3 py-2">
                             Click on the map or drag the marker to update coordinates, then save.
