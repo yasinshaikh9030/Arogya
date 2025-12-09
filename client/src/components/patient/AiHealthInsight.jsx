@@ -18,8 +18,9 @@ const AiHealthInsight = ({ aiInsight }) => {
         healthState,
         possibleDiseases,
         remedies,
-        otcMedicines,
-        urgentCare,
+        appointmentUrgency,
+        consultationSuggestion,
+        urgent,
         lifestyleAdvice,
         disclaimer
     } = aiInsight;
@@ -94,8 +95,19 @@ const AiHealthInsight = ({ aiInsight }) => {
                     <div className="space-y-4 ">
                         {possibleDiseases.map((disease, index) => {
                             const diseaseName = formatItem(disease.name);
-                            const confidenceText = formatItem(disease.confidence);
+                            const probabilityText = formatItem(disease.probability || disease.confidence);
                             const reasonText = formatItem(disease.reason);
+                            const severity = disease.severity;
+                            const consultationType = disease.recommendedConsultationType || disease.recommended_consultation_type;
+
+                            const getSeverityColor = (sev) => {
+                                switch (sev?.toLowerCase()) {
+                                    case 'mild': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
+                                    case 'moderate': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300';
+                                    case 'severe': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
+                                    default: return 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300';
+                                }
+                            };
 
                             return (
                                 <div key={index} className="bg-light-surface dark:bg-dark-bg rounded-xl p-4">
@@ -103,13 +115,34 @@ const AiHealthInsight = ({ aiInsight }) => {
                                         <h4 className="font-semibold text-light-primary-text dark:text-dark-primary-text text-lg">
                                             {diseaseName}
                                         </h4>
-                                        <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium">
-                                            {confidenceText}
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            {severity && (
+                                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getSeverityColor(severity)}`}>
+                                                    {severity}
+                                                </span>
+                                            )}
+                                            <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium">
+                                                {probabilityText}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <p className="text-light-secondary-text dark:text-dark-secondary-text">
+                                    <p className="text-light-secondary-text dark:text-dark-secondary-text mb-2">
                                         {reasonText}
                                     </p>
+                                    {consultationType && (
+                                        <div className="flex items-center gap-2 mt-2">
+                                            <span className="text-xs text-light-secondary-text dark:text-dark-secondary-text">
+                                                Recommended:
+                                            </span>
+                                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                                consultationType === 'online' 
+                                                    ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                                                    : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
+                                            }`}>
+                                                {consultationType === 'online' ? 'Online Consultation' : 'Offline Consultation'}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}
@@ -127,67 +160,110 @@ const AiHealthInsight = ({ aiInsight }) => {
                         </h3>
                     </div>
 
-                    <ul className="space-y-2">
-                        {remedies.map((remedy, index) => (
-                            <li key={index} className="flex items-start gap-3">
-                                <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                                <span className="text-light-primary-text dark:text-dark-primary-text">
-                                    {formatItem(remedy)}
-                                </span>
-                            </li>
-                        ))}
+                    <ul className="space-y-3">
+                        {remedies.map((remedy, index) => {
+                            const remedyName = remedy.name || (typeof remedy === "string" ? remedy : "");
+                            const remedyDesc = remedy.description || (typeof remedy === "string" ? "" : "");
+                            
+                            return (
+                                <li key={index} className="flex items-start gap-3">
+                                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                                    <div>
+                                        {remedyName && (
+                                            <span className="font-semibold text-light-primary-text dark:text-dark-primary-text">
+                                                {remedyName}
+                                            </span>
+                                        )}
+                                        {remedyDesc && (
+                                            <p className="text-light-secondary-text dark:text-dark-secondary-text text-sm mt-1">
+                                                {remedyDesc}
+                                            </p>
+                                        )}
+                                        {!remedyName && !remedyDesc && (
+                                            <span className="text-light-primary-text dark:text-dark-primary-text">
+                                                {formatItem(remedy)}
+                                            </span>
+                                        )}
+                                    </div>
+                                </li>
+                            );
+                        })}
                     </ul>
                 </div>
             )}
 
-            {/* OTC Medicines */}
-            {otcMedicines && otcMedicines.length > 0 && (
-                <div className="bg-light-bg dark:bg-dark-surface rounded-2xl p-6 shadow-lg">
-                    <div className="flex items-center gap-3 mb-4">
-                        <Pill className="w-6 h-6 text-purple-600" />
-                        <h3 className="text-xl font-bold text-light-primary-text dark:text-dark-primary-text">
-                            Medicine Suggestions
-                        </h3>
-                    </div>
-
-                    <ul className="space-y-2">
-                        {otcMedicines.map((medicine, index) => (
-                            <li key={index} className="flex items-start gap-3">
-                                <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
-                                <span className="text-light-primary-text dark:text-dark-primary-text">
-                                    {formatItem(medicine)}
-                                </span>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
-
-            {/* Urgent Care */}
-            {urgentCare && (
-                <div className={`rounded-2xl p-6 shadow-lg ${urgentCare.toLowerCase().includes('urgent')
-                    ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
-                    : 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
-                    }`}>
-                    <div className="flex items-center gap-3 mb-2">
-                        <AlertCircle className={`w-6 h-6 ${urgentCare.toLowerCase().includes('urgent')
-                            ? 'text-red-600'
-                            : 'text-blue-600'
-                            }`} />
-                        <h3 className={`text-xl font-bold ${urgentCare.toLowerCase().includes('urgent')
-                            ? 'text-red-800 dark:text-red-200'
-                            : 'text-blue-800 dark:text-blue-200'
+            {/* Appointment Urgency */}
+            {appointmentUrgency && (
+                <div className={`rounded-2xl p-6 shadow-lg ${
+                    parseInt(appointmentUrgency.scale_1_to_5) >= 4
+                        ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+                        : parseInt(appointmentUrgency.scale_1_to_5) >= 3
+                        ? 'bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800'
+                        : 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
+                }`}>
+                    <div className="flex items-center gap-3 mb-3">
+                        <AlertCircle className={`w-6 h-6 ${
+                            parseInt(appointmentUrgency.scale_1_to_5) >= 4
+                                ? 'text-red-600'
+                                : parseInt(appointmentUrgency.scale_1_to_5) >= 3
+                                ? 'text-orange-600'
+                                : 'text-blue-600'
+                        }`} />
+                        <div>
+                            <h3 className={`text-xl font-bold ${
+                                parseInt(appointmentUrgency.scale_1_to_5) >= 4
+                                    ? 'text-red-800 dark:text-red-200'
+                                    : parseInt(appointmentUrgency.scale_1_to_5) >= 3
+                                    ? 'text-orange-800 dark:text-orange-200'
+                                    : 'text-blue-800 dark:text-blue-200'
                             }`}>
-                            {urgentCare.toLowerCase().includes('urgent')
-                                ? 'Urgent Care Needed'
-                                : 'Medical Attention'}
+                                Appointment Urgency: {appointmentUrgency.level || 'Unknown'}
+                            </h3>
+                            <p className="text-sm text-light-secondary-text dark:text-dark-secondary-text mt-1">
+                                Scale: {appointmentUrgency.scale_1_to_5}/5
+                            </p>
+                        </div>
+                    </div>
+                    {appointmentUrgency.reason && (
+                        <p className={`${
+                            parseInt(appointmentUrgency.scale_1_to_5) >= 4
+                                ? 'text-red-700 dark:text-red-300'
+                                : parseInt(appointmentUrgency.scale_1_to_5) >= 3
+                                ? 'text-orange-700 dark:text-orange-300'
+                                : 'text-blue-700 dark:text-blue-300'
+                        }`}>
+                            {appointmentUrgency.reason}
+                        </p>
+                    )}
+                </div>
+            )}
+
+            {/* Consultation Suggestion */}
+            {consultationSuggestion && (
+                <div className="bg-light-bg dark:bg-dark-surface rounded-2xl p-6 shadow-lg border border-light-primary/20 dark:border-dark-primary/20">
+                    <div className="flex items-center gap-3 mb-2">
+                        <CheckCircle2 className="w-6 h-6 text-light-primary dark:text-dark-primary" />
+                        <h3 className="text-xl font-bold text-light-primary-text dark:text-dark-primary-text">
+                            Consultation Recommendation
                         </h3>
                     </div>
-                    <p className={`${urgentCare.toLowerCase().includes('urgent')
-                        ? 'text-red-700 dark:text-red-300'
-                        : 'text-blue-700 dark:text-blue-300'
-                        }`}>
-                        {String(urgentCare)}
+                    <p className="text-light-primary-text dark:text-dark-primary-text">
+                        {consultationSuggestion}
+                    </p>
+                </div>
+            )}
+
+            {/* Urgent Flag */}
+            {urgent && urgent.toLowerCase() !== 'no' && (
+                <div className="rounded-2xl p-6 shadow-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                    <div className="flex items-center gap-3 mb-2">
+                        <AlertCircle className="w-6 h-6 text-red-600" />
+                        <h3 className="text-xl font-bold text-red-800 dark:text-red-200">
+                            Urgent Attention Required
+                        </h3>
+                    </div>
+                    <p className="text-red-700 dark:text-red-300">
+                        {urgent}
                     </p>
                 </div>
             )}
@@ -202,15 +278,34 @@ const AiHealthInsight = ({ aiInsight }) => {
                         </h3>
                     </div>
 
-                    <ul className="space-y-2">
-                        {lifestyleAdvice.map((advice, index) => (
-                            <li key={index} className="flex items-start gap-3">
-                                <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
-                                <span className="text-light-primary-text dark:text-dark-primary-text">
-                                    {formatItem(advice)}
-                                </span>
-                            </li>
-                        ))}
+                    <ul className="space-y-3">
+                        {lifestyleAdvice.map((advice, index) => {
+                            const adviceName = advice.name || (typeof advice === "string" ? advice : "");
+                            const adviceDesc = advice.description || (typeof advice === "string" ? "" : "");
+                            
+                            return (
+                                <li key={index} className="flex items-start gap-3">
+                                    <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
+                                    <div>
+                                        {adviceName && (
+                                            <span className="font-semibold text-light-primary-text dark:text-dark-primary-text">
+                                                {adviceName}
+                                            </span>
+                                        )}
+                                        {adviceDesc && (
+                                            <p className="text-light-secondary-text dark:text-dark-secondary-text text-sm mt-1">
+                                                {adviceDesc}
+                                            </p>
+                                        )}
+                                        {!adviceName && !adviceDesc && (
+                                            <span className="text-light-primary-text dark:text-dark-primary-text">
+                                                {formatItem(advice)}
+                                            </span>
+                                        )}
+                                    </div>
+                                </li>
+                            );
+                        })}
                     </ul>
                 </div>
             )}

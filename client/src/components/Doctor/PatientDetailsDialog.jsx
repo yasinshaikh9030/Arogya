@@ -17,6 +17,7 @@ import {
     Info,
     History,
 } from "lucide-react";
+import jsPDF from "jspdf";
 
 const PatientDetailsDialog = ({ appointment, isOpen, onClose }) => {
     const { getToken } = useAuth();
@@ -179,6 +180,45 @@ const PatientDetailsDialog = ({ appointment, isOpen, onClose }) => {
                                     <p className="text-sm text-light-primary-text dark:text-dark-primary-text bg-light-bg dark:bg-dark-bg p-3 rounded-lg border border-light-secondary-text/10 dark:border-dark-secondary-text/10">
                                         {appointment.patientId.medicalHistory}
                                     </p>
+                                </div>
+                            )}
+
+                            {appointment.patientId?.medicalHistorySummary && (
+                                <div className="md:col-span-2 mt-2 space-y-2">
+                                    <p className="text-xs text-light-secondary-text dark:text-dark-secondary-text mb-1 flex items-center gap-2">
+                                        <History className="w-4 h-4 text-blue-500" /> AI Medical History Summary
+                                    </p>
+                                    <p className="text-sm text-light-primary-text dark:text-dark-primary-text bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800 whitespace-pre-wrap">
+                                        {appointment.patientId.medicalHistorySummary}
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            try {
+                                                const summary = appointment.patientId.medicalHistorySummary || "";
+                                                if (!summary) return;
+                                                const doc = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
+                                                const marginLeft = 15;
+                                                const marginTop = 20;
+                                                const maxWidth = 180;
+
+                                                doc.setFont("Helvetica", "normal");
+                                                doc.setFontSize(14);
+                                                doc.text("Medical history summary", marginLeft, marginTop);
+
+                                                doc.setFontSize(11);
+                                                const lines = doc.splitTextToSize(summary, maxWidth);
+                                                doc.text(lines, marginLeft, marginTop + 8);
+
+                                                doc.save("medical-history-summary.pdf");
+                                            } catch (err) {
+                                                console.error("Failed to download summary PDF", err);
+                                            }
+                                        }}
+                                        className="inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold rounded-md border border-blue-300 text-blue-700 bg-white hover:bg-blue-50 dark:border-blue-800 dark:text-blue-200 dark:bg-transparent dark:hover:bg-blue-900/20"
+                                    >
+                                        Download summary as PDF
+                                    </button>
                                 </div>
                             )}
 

@@ -48,6 +48,7 @@ import MenstrualHealth from "./pages/patientPages/MenstrualHealth/MenstrualHealt
 import PatientDashboard from "./pages/patientPages/PatientDashboard/PatientDashboard";
 import SheReads from "./pages/patientPages/SheReads/SheReads";
 import SymptomChecker from "./pages/patientPages/SymptomChecker/SymptomChecker";
+import PatientMedicalHistory from "./pages/patientPages/MedicalHistory/PatientMedicalHistoryContent";
 import PharmacyDashboard from "./pages/pharmacyPages/PharmacyDashboard/PharmacyDashboard";
 import VideoAppointment from "./components/Doctor/VideoAppointment";
 import MedicineSearch from "./pages/patientPages/MedicineSearch/MedicineSearch";
@@ -98,6 +99,12 @@ const patientTabs = [
     },
     {
         id: 7,
+        name: "Medical History",
+        icon: FileText,
+        path: "/patient/medical-history",
+    },
+    {
+        id: 8,
         name: "Community Health",
         icon: Megaphone,
         path: "/patient/community",
@@ -288,6 +295,14 @@ function App() {
                     element={
                         <ProtectedRoute requiredRole="Patient">
                             <GetAppointment tabs={patientTabs} />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/patient/medical-history"
+                    element={
+                        <ProtectedRoute requiredRole="Patient">
+                            <PatientMedicalHistory tabs={patientTabs} />
                         </ProtectedRoute>
                     }
                 />

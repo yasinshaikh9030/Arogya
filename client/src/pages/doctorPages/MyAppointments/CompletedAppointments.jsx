@@ -12,6 +12,8 @@ import {
     MapPin,
     IndianRupee,
     MessageSquareText,
+    Pill,
+    X,
 } from "lucide-react";
 
 const formatDateTime = (iso) => {
@@ -76,6 +78,13 @@ const CompletedAppointments = () => {
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
+    const [prescriptionSaving, setPrescriptionSaving] = useState(false);
+    const [prescriptionError, setPrescriptionError] = useState("");
+    const [editingAppointment, setEditingAppointment] = useState(null);
+    const [prescriptionItems, setPrescriptionItems] = useState([
+        { medicine: "", dosage: "", frequency: "", notes: "" },
+    ]);
 
     useEffect(() => {
         if (!user) return;
@@ -112,6 +121,93 @@ const CompletedAppointments = () => {
                     new Date(a.scheduledAt).getTime()
             );
     }, [appointments]);
+
+    const openPrescriptionEditor = (appt) => {
+        const existing = Array.isArray(appt.prescription)
+            ? appt.prescription
+            : [];
+        setEditingAppointment(appt);
+        setPrescriptionItems(
+            existing.length > 0
+                ? existing.map((item) => ({
+                      medicine: item.medicine || "",
+                      dosage: item.dosage || "",
+                      frequency: item.frequency || "",
+                      notes: item.notes || "",
+                  }))
+                : [{ medicine: "", dosage: "", frequency: "", notes: "" }]
+        );
+        setPrescriptionError("");
+        setPrescriptionModalOpen(true);
+    };
+
+    const updatePrescriptionItem = (index, field, value) => {
+        setPrescriptionItems((prev) => {
+            const copy = [...prev];
+            copy[index] = { ...copy[index], [field]: value };
+            return copy;
+        });
+    };
+
+    const addPrescriptionRow = () => {
+        setPrescriptionItems((prev) => [
+            ...prev,
+            { medicine: "", dosage: "", frequency: "", notes: "" },
+        ]);
+    };
+
+    const removePrescriptionRow = (index) => {
+        setPrescriptionItems((prev) =>
+            prev.filter((_, idx) => idx !== index)
+        );
+    };
+
+    const handleSavePrescription = async () => {
+        if (!editingAppointment) return;
+        try {
+            setPrescriptionSaving(true);
+            setPrescriptionError("");
+
+            const cleaned = prescriptionItems
+                .map((item) => ({
+                    medicine: (item.medicine || "").trim(),
+                    dosage: (item.dosage || "").trim(),
+                    frequency: (item.frequency || "").trim(),
+                    notes: (item.notes || "").trim(),
+                }))
+                .filter((item) => item.medicine);
+
+            const token = await getToken();
+            const res = await axios.put(
+                `${import.meta.env.VITE_SERVER_URL}/api/appointment/${
+                    editingAppointment._id
+                }/prescription`,
+                { prescription: cleaned },
+                token
+                    ? { headers: { Authorization: `Bearer ${token}` } }
+                    : undefined
+            );
+
+            const updatedAppt = res.data?.data;
+            if (updatedAppt) {
+                setAppointments((prev) =>
+                    (prev || []).map((a) =>
+                        a._id === updatedAppt._id ? { ...a, ...updatedAppt } : a
+                    )
+                );
+            }
+
+            setPrescriptionModalOpen(false);
+            setEditingAppointment(null);
+        } catch (err) {
+            console.error(err?.response?.data || err);
+            setPrescriptionError(
+                err?.response?.data?.message || "Failed to save prescription"
+            );
+        } finally {
+            setPrescriptionSaving(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -261,6 +357,28 @@ const CompletedAppointments = () => {
                                                     </Badge>
                                                 </div>
                                                 {isCompleted && (
+                                                    <div className="mt-3 flex flex-wrap gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                openPrescriptionEditor(
+                                                                    appt
+                                                                )
+                                                            }
+                                                            className="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium bg-light-primary/10 text-light-primary hover:bg-light-primary/20 dark:bg-dark-primary/20 dark:text-dark-primary dark:hover:bg-dark-primary/30"
+                                                        >
+                                                            <Pill className="w-3.5 h-3.5" />
+                                                            {Array.isArray(
+                                                                appt.prescription
+                                                            ) &&
+                                                            appt.prescription
+                                                                .length > 0
+                                                                ? "Edit Prescription"
+                                                                : "Add Prescription"}
+                                                        </button>
+                                                    </div>
+                                                )}
+                                                {isCompleted && (
                                                     <div className="space-y-2">
                                                         <div className="text-xs uppercase tracking-wide text-light-secondary-text dark:text-dark-secondary-text">
                                                             Patient Feedback
@@ -317,6 +435,169 @@ const CompletedAppointments = () => {
                             </div>
                         );
                     })}
+                </div>
+            )}
+            {prescriptionModalOpen && editingAppointment && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-3xl max-h-[85vh] overflow-auto rounded-2xl bg-light-surface dark:bg-dark-bg p-4 shadow-lg">
+                        <div className="flex items-center justify-between mb-3">
+                            <div>
+                                <h4 className="text-lg font-semibold text-light-primary-text dark:text-dark-primary-text">
+                                    {Array.isArray(editingAppointment.prescription) &&
+                                    editingAppointment.prescription.length > 0
+                                        ? "Edit Prescription"
+                                        : "Add Prescription"}
+                                </h4>
+                                <p className="text-xs text-light-secondary-text dark:text-dark-secondary-text">
+                                    For patient {editingAppointment?.patientId?.fullName || ""}
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setPrescriptionModalOpen(false);
+                                    setEditingAppointment(null);
+                                }}
+                                className="px-2 py-1 rounded text-light-primary-text dark:text-dark-primary-text hover:bg-light-bg dark:hover:bg-dark-surface"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        {prescriptionError && (
+                            <div className="mb-3 rounded border border-light-fail/60 bg-light-fail/20 px-3 py-2 text-xs text-light-primary-text dark:border-dark-fail/60 dark:bg-dark-fail/10 dark:text-dark-primary-text">
+                                {prescriptionError}
+                            </div>
+                        )}
+
+                        <div className="space-y-3">
+                            {prescriptionItems.map((item, index) => (
+                                <div
+                                    key={index}
+                                    className="rounded-lg border border-light-secondary-text/20 dark:border-dark-secondary-text/20 p-3 flex flex-col gap-2"
+                                >
+                                    <div className="flex flex-col sm:flex-row gap-2">
+                                        <div className="flex-1">
+                                            <label className="block text-xs text-light-secondary-text dark:text-dark-secondary-text mb-1">
+                                                Medicine
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={item.medicine}
+                                                onChange={(e) =>
+                                                    updatePrescriptionItem(
+                                                        index,
+                                                        "medicine",
+                                                        e.target.value
+                                                    )
+                                                }
+                                                className="w-full rounded border border-light-secondary-text/30 dark:border-dark-secondary-text/30 bg-transparent px-2 py-1 text-sm text-light-primary-text dark:text-dark-primary-text focus:outline-none focus:ring-1 focus:ring-light-primary dark:focus:ring-dark-primary"
+                                                placeholder="Medicine name"
+                                            />
+                                        </div>
+                                        <div className="flex-1">
+                                            <label className="block text-xs text-light-secondary-text dark:text-dark-secondary-text mb-1">
+                                                Dosage
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={item.dosage}
+                                                onChange={(e) =>
+                                                    updatePrescriptionItem(
+                                                        index,
+                                                        "dosage",
+                                                        e.target.value
+                                                    )
+                                                }
+                                                className="w-full rounded border border-light-secondary-text/30 dark:border-dark-secondary-text/30 bg-transparent px-2 py-1 text-sm text-light-primary-text dark:text-dark-primary-text focus:outline-none focus:ring-1 focus:ring-light-primary dark:focus:ring-dark-primary"
+                                                placeholder="e.g. 1 tablet"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col sm:flex-row gap-2">
+                                        <div className="flex-1">
+                                            <label className="block text-xs text-light-secondary-text dark:text-dark-secondary-text mb-1">
+                                                Frequency
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={item.frequency}
+                                                onChange={(e) =>
+                                                    updatePrescriptionItem(
+                                                        index,
+                                                        "frequency",
+                                                        e.target.value
+                                                    )
+                                                }
+                                                className="w-full rounded border border-light-secondary-text/30 dark:border-dark-secondary-text/30 bg-transparent px-2 py-1 text-sm text-light-primary-text dark:text-dark-primary-text focus:outline-none focus:ring-1 focus:ring-light-primary dark:focus:ring-dark-primary"
+                                                placeholder="e.g. twice a day"
+                                            />
+                                        </div>
+                                        <div className="flex-1">
+                                            <label className="block text-xs text-light-secondary-text dark:text-dark-secondary-text mb-1">
+                                                Notes
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={item.notes}
+                                                onChange={(e) =>
+                                                    updatePrescriptionItem(
+                                                        index,
+                                                        "notes",
+                                                        e.target.value
+                                                    )
+                                                }
+                                                className="w-full rounded border border-light-secondary-text/30 dark:border-dark-secondary-text/30 bg-transparent px-2 py-1 text-sm text-light-primary-text dark:text-dark-primary-text focus:outline-none focus:ring-1 focus:ring-light-primary dark:focus:ring-dark-primary"
+                                                placeholder="Additional instructions"
+                                            />
+                                        </div>
+                                    </div>
+                                    {prescriptionItems.length > 1 && (
+                                        <div className="flex justify-end">
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    removePrescriptionRow(index)
+                                                }
+                                                className="text-xs text-light-secondary-text dark:text-dark-secondary-text hover:text-light-primary dark:hover:text-dark-primary flex items-center gap-1"
+                                            >
+                                                <X className="w-3 h-3" />
+                                                Remove
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                            <button
+                                type="button"
+                                onClick={addPrescriptionRow}
+                                className="mt-1 inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium bg-light-bg text-light-primary-text hover:bg-light-primary/10 dark:bg-dark-surface dark:text-dark-primary-text dark:hover:bg-dark-primary/20"
+                            >
+                                + Add another medicine
+                            </button>
+                        </div>
+
+                        <div className="mt-4 flex items-center justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setPrescriptionModalOpen(false);
+                                    setEditingAppointment(null);
+                                }}
+                                className="px-3 py-1.5 text-xs rounded-md border border-light-secondary-text/40 text-light-secondary-text hover:bg-light-bg dark:border-dark-secondary-text/40 dark:text-dark-secondary-text dark:hover:bg-dark-surface"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSavePrescription}
+                                disabled={prescriptionSaving}
+                                className="px-4 py-1.5 text-xs rounded-md bg-light-primary text-dark-primary-text hover:bg-light-primary-hover disabled:opacity-60 dark:bg-dark-primary dark:text-dark-primary-text dark:hover:bg-dark-primary-hover"
+                            >
+                                {prescriptionSaving ? "Saving..." : "Save Prescription"}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
