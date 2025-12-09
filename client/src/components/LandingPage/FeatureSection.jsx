@@ -32,18 +32,18 @@ const features = [
 export default function FeatureSection() {
     return (
         <div className="bg-ligh-bg">
-            <div className="mx-auto max-w-2xl grid-cols-1 items-center px-4 py-24 sm:px-6 sm:py-32 lg:max-w-7xl  flex gap-20">
+            <div className="mx-auto max-w-2xl lg:max-w-7xl px-4 py-16 sm:px-6 sm:py-24 flex flex-col-reverse lg:flex-row items-center gap-10 lg:gap-20">
                 <div>
                     <div className="max-w-5xl">
                         <h2 className="text-base/7 font-semibold text-light-primary dark:text-dark-primary">
                             Features
                         </h2>
-                        <p className="mt-2 max-w-2xl text-4xl font-semibold tracking-tight text-balance text-light-primary-text dark:text-dark-primary-text sm:text-5xl">
+                        <p className="mt-2 max-w-2xl text-2xl font-semibold tracking-tight text-balance text-light-primary-text dark:text-dark-primary-text sm:text-4xl">
                             Discover the unique features that set our product apart.
                         </p>
                     </div>
 
-                    <dl className="mt-16 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 sm:gap-y-16 lg:gap-x-8">
+                    <dl className="mt-10 sm:mt-16 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 sm:gap-y-10 lg:gap-x-8">
                         {features.map((feature) => (
                             <div
                                 key={feature.name}
@@ -58,12 +58,12 @@ export default function FeatureSection() {
                         ))}
                     </dl>
                 </div>
-                <div className="flex items-center justify-center">
-                    <div className="bg-light-surface dark:bg-dark-surface rounded-[2rem] p-4 shadow-lg border border-gray-200 dark:border-gray-700 w-[360px] h-[650px] flex items-center justify-center">
+                <div className="flex items-center justify-center w-full">
+                    <div className="bg-light-surface dark:bg-dark-surface rounded-[2rem] p-4 shadow-lg border border-gray-200 dark:border-gray-700 w-full max-w-[360px] aspect-[9/16] flex items-center justify-center">
                         <img
                             src="/mobileImage.jpeg" // Replace with your actual prototype image path
                             alt="App Prototype"
-                            className="rounded-[1.4rem] w-[350px] h-[620px] object-cover"
+                            className="rounded-[1.4rem] w-full h-full object-cover"
                             draggable={false}
                         />
                     </div>

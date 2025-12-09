@@ -43,15 +43,15 @@ function buildDiagnosisPrompt(userMeta = {}, symptoms = [], id = "") {
         Array.isArray(arr) && arr.length ? arr.join(", ") : "None";
     const dobOrAge = userMeta.dob
         ? `${userMeta.dob} (age: ${Math.max(
-              0,
-              Math.floor(
-                  (Date.now() - new Date(userMeta.dob)) /
-                      (365.25 * 24 * 60 * 60 * 1000)
-              )
-          )})`
+            0,
+            Math.floor(
+                (Date.now() - new Date(userMeta.dob)) /
+                (365.25 * 24 * 60 * 60 * 1000)
+            )
+        )})`
         : userMeta.age
-        ? `${userMeta.age} years`
-        : "N/A";
+            ? `${userMeta.age} years`
+            : "N/A";
 
     const patientBlock = [
         `Name: ${userMeta.fullName || "N/A"}`,
@@ -123,6 +123,7 @@ const GetAppointmentContent = () => {
     const [loadingSlots, setLoadingSlots] = useState(false);
     const [userMetadata, setUserMetadata] = useState(user.unsafeMetadata || {});
     const [isBooking, setIsBooking] = useState(false);
+    const today = new Date().toISOString().split("T")[0];
 
     // ML recommendation inputs
     const [mlSymptoms, setMlSymptoms] = useState([]);
@@ -145,8 +146,7 @@ const GetAppointmentContent = () => {
                 setLoading(true);
                 const token = await getToken();
                 const res = await axios.get(
-                    `${
-                        import.meta.env.VITE_SERVER_URL
+                    `${import.meta.env.VITE_SERVER_URL
                     }/api/doctor/verified-doctors`,
                     {
                         headers: { Authorization: `Bearer ${token}` },
@@ -320,8 +320,7 @@ const GetAppointmentContent = () => {
                         appointmentForm.symptoms
                     );
                     const summary = await axios.get(
-                        `${
-                            import.meta.env.VITE_SERVER_URL
+                        `${import.meta.env.VITE_SERVER_URL
                         }/api/ai/generate-questions`,
                         {
                             params: { prompt },
@@ -351,17 +350,16 @@ const GetAppointmentContent = () => {
 
                     const token = await getToken();
                     const res = await axios.post(
-                        `${
-                            import.meta.env.VITE_SERVER_URL
+                        `${import.meta.env.VITE_SERVER_URL
                         }/api/appointment/create-appointment`,
                         formData,
                         token
                             ? {
-                                  headers: {
-                                      Authorization: `Bearer ${token}`,
-                                      "Content-Type": "multipart/form-data",
-                                  },
-                              }
+                                headers: {
+                                    Authorization: `Bearer ${token}`,
+                                    "Content-Type": "multipart/form-data",
+                                },
+                            }
                             : undefined
                     );
                     closeBookingModal();
@@ -383,8 +381,7 @@ const GetAppointmentContent = () => {
                             }));
                             const token2 = await getToken();
                             const res2 = await axios.get(
-                                `${
-                                    import.meta.env.VITE_SERVER_URL
+                                `${import.meta.env.VITE_SERVER_URL
                                 }/api/doctor/${selectedDoctor._id}/slots`,
                                 {
                                     params: { date: appointmentForm.date },
@@ -450,8 +447,7 @@ const GetAppointmentContent = () => {
                 setLoadingSlots(true);
                 const token = await getToken();
                 const res = await axios.get(
-                    `${import.meta.env.VITE_SERVER_URL}/api/doctor/${
-                        selectedDoctor._id
+                    `${import.meta.env.VITE_SERVER_URL}/api/doctor/${selectedDoctor._id
                     }/slots`,
                     {
                         params: { date: value },
@@ -482,8 +478,7 @@ const GetAppointmentContent = () => {
             try {
                 const token = await getToken();
                 const res = await axios.get(
-                    `${import.meta.env.VITE_SERVER_URL}/api/doctor/${
-                        selectedDoctor._id
+                    `${import.meta.env.VITE_SERVER_URL}/api/doctor/${selectedDoctor._id
                     }/slots`,
                     {
                         params: { date: appointmentForm.date },
@@ -493,7 +488,7 @@ const GetAppointmentContent = () => {
                     }
                 );
                 if (!cancelled) setAvailableSlots(res.data?.data || []);
-            } catch (_) {}
+            } catch (_) { }
         };
         // initial fetch to sync
         tick();
@@ -518,18 +513,17 @@ const GetAppointmentContent = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-light-background to-light-background-secondary dark:from-dark-background dark:to-dark-background-secondary">
-            <div className="max-w-7xl mx-auto p-6">
-                <div className="mt-4 rounded-2xl bg-light-surface dark:bg-dark-bg border border-light-secondary-text/20 dark:border-dark-secondary-text/20 p-4 space-y-4">
-                    <div className="flex items-center justify-between gap-2">
-                        <div>
-                            <p className="text-xl font-semibold text-light-primary-text dark:text-dark-primary-text">
-                                Describe your problem
-                            </p>
-                            <p className="text-md text-light-secondary-text dark:text-dark-secondary-text">
-                                Enter symptoms and (optionally) vitals so our AI
-                                model can suggest the most relevant specialists.
-                            </p>
-                        </div>
+            <div className="max-w-4xl mx-auto px-4 py-4 sm:px-6 sm:py-6">
+                <div className="mb-4 sm:mb-6">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-light-primary-text dark:text-dark-primary-text">
+                        Find a Verified Doctor
+                    </h1>
+                    <p className="mt-1 text-sm sm:text-base text-light-secondary-text dark:text-dark-secondary-text">
+                        All doctors listed below are identity-verified and
+                        available for appointments.
+                    </p>
+            
+                      </div>
                     </div>
 
                     <div className="space-y-3">
@@ -693,6 +687,7 @@ const GetAppointmentContent = () => {
                 </div>
             </div>
 
+
             {mlMeta?.urgency && (
                 <div className="mb-4 rounded-xl border border-light-secondary-text/30 dark:border-dark-secondary-text/30 bg-light-surface dark:bg-dark-bg px-4 py-3 text-md text-light-primary-text dark:text-dark-primary-text">
                     {mlMeta.urgency === "A" && (
@@ -731,31 +726,31 @@ const GetAppointmentContent = () => {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {doctors.map((doc) => (
-                    <div
-                        key={doc._id}
-                        className="rounded-2xl bg-light-surface dark:bg-dark-bg p-4 shadow-md hover:shadow-xl transition-all duration-200 border border-transparent hover:border-light-primary/20 dark:hover:border-dark-primary/20">
-                        <div className="grid grid-cols-9 gap-4 items-center">
-                            <div className="col-span-2 flex items-center">
-                                <div className="w-full aspect-square rounded-full bg-gradient-to-br from-light-primary/20 to-light-primary/10 dark:from-dark-primary/20 dark:to-dark-primary/10 flex items-center justify-center text-xl font-semibold text-light-primary dark:text-dark-primary">
-                                    {doc.fullName
-                                        ? doc.fullName
-                                              .split(" ")
-                                              .map((n) => n[0])
-                                              .slice(0, 2)
-                                              .join("")
-                                        : "DR"}
-                                </div>
+                    {doctors.map((doc) => (
+                        <div
+                            key={doc._id}
+                            className="rounded-2xl bg-light-surface dark:bg-dark-bg p-4 shadow-md hover:shadow-xl transition-all duration-200 border border-transparent hover:border-light-primary/20 dark:hover:border-dark-primary/20">
+                            <div className="grid grid-cols-9 gap-4 items-center">
+                                <div className="col-span-2 flex items-center">
+                                    <div className="w-full aspect-square rounded-full bg-gradient-to-br from-light-primary/20 to-light-primary/10 dark:from-dark-primary/20 dark:to-dark-primary/10 flex items-center justify-center text-xl font-semibold text-light-primary dark:text-dark-primary">
+                                        {doc.fullName
+                                            ? doc.fullName
+                                                .split(" ")
+                                                .map((n) => n[0])
+                                                .slice(0, 2)
+                                                .join("")
+                                            : "DR"}
+                                    </div>
                             </div>
 
-                            <div className="col-span-5">
-                                <div className="flex items-center gap-2">
-                                    <h3 className="text-lg font-semibold text-light-primary-text dark:text-dark-primary-text">
-                                        Dr. {doc.fullName}
-                                    </h3>
-                                    {doc.specialty && (
-                                        <span className="text-xs text-white bg-light-secondary px-2 py-1 rounded-2xl ml-2">
-                                            {doc.specialty}
+                                <div className="col-span-5">
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="text-base sm:text-lg font-semibold text-light-primary-text dark:text-dark-primary-text">
+                                            Dr. {doc.fullName}
+                                        </h3>
+                                        {doc.specialty && (
+                                            <span className="text-xs text-white bg-light-secondary px-2 py-1 rounded-2xl ml-2">
+                                                {doc.specialty}
                                         </span>
                                     )}
                                 </div>
@@ -785,34 +780,63 @@ const GetAppointmentContent = () => {
                                             </span>
                                         </div>
                                     </div>
+                                    <p className="text-xs sm:text-sm text-[var(--color-light-secondary-text)] dark:text-[var(--color-dark-secondary-text)] mt-1">
+                                        {doc.bio
+                                            ? doc.bio.length > 120
+                                                ? doc.bio.slice(0, 120) + "..."
+                                                : doc.bio
+                                            : "Board certified physician with patient-focused care."}
+                                    </p>
 
-                                    <div className="text-sm text-light-secondary-text bg-light-bg dark:bg-dark-surface px-3 py-1 rounded-full dark:text-dark-secondary-text">
-                                        {doc.experience
-                                            ? `${doc.experience} yrs`
-                                            : "N/A"}{" "}
-                                        experience
-                                    </div>
-                                    <div className="flex gap-1">
-                                        {doc.languages?.length > 0 &&
-                                            doc.languages.map((l, i) => (
-                                                <span
-                                                    key={i}
-                                                    className="px-2 py-0.5 rounded-full bg-light-primary/10 dark:bg-dark-primary/10 text-xs text-light-primary dark:text-dark-primary">
-                                                    {l}
+                                    <div className="mt-3 flex items-center gap-2 flex-wrap">
+                                        <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full dark:text-yellow-300 text-xs sm:text-sm">
+                                            <Star
+                                                className="fill-amber-400"
+                                                size={28}
+                                                color="amber-400"
+                                            />
+                                            <div className="flex gap-1 items-center">
+                                                <span className="font-medium">
+                                                    {(
+                                                        doc.rating?.average ?? 0
+                                                    ).toFixed(1)}
                                                 </span>
-                                            ))}
-                                    </div>
+                                                <span className="text-xs text-light-secondary-text dark:text-dark-secondary-text">
+                                                    ({doc.rating?.count ?? 0})
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        
+
+                                    <div className="text-xs sm:text-sm text-light-secondary-text bg-light-bg dark:bg-dark-surface px-3 py-1 rounded-full dark:text-dark-secondary-text">
+                                            {doc.experience
+                                                ? `${doc.experience} yrs`
+                                                : "N/A"}{" "}
+                                            experience
+                                        </div>
+                                        <div className="flex gap-1">
+                                            {doc.languages?.length > 0 &&
+                                                doc.languages.map((l, i) => (
+                                                    <span
+                                                        key={i}
+                                                        className="px-2 py-0.5 rounded-full bg-light-primary/10 dark:bg-dark-primary/10 text-xs text-light-primary dark:text-dark-primary">
+                                                        {l}
+                                                    </span>
+                                                ))}
+                                        </div>
                                 </div>
                             </div>
 
+                                
                             <div className="col-span-2 h-full flex flex-col justify-between gap-3">
-                                <div className="text-right">
-                                    <div className="text-2xl font-semibold text-light-primary-text dark:text-dark-primary-text">
-                                        ₹{doc.consultationFee ?? 0}
-                                    </div>
-                                    <div className="text-xs text-light-secondary-text dark:text-dark-secondary-text">
-                                        / consultation
-                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-xl sm:text-2xl font-semibold text-light-primary-text dark:text-dark-primary-text">
+                                            ₹{doc.consultationFee ?? 0}
+                                        </div>
+                                        <div className="text-xs text-light-secondary-text dark:text-dark-secondary-text">
+                                            / consultation
+                                        </div>
                                 </div>
 
                                 <button
@@ -865,6 +889,7 @@ const GetAppointmentContent = () => {
                                     </p>
                                     <input
                                         type="date"
+                                        min={today}
                                         value={appointmentForm.date}
                                         onChange={(e) =>
                                             handleAppointmentFormChange(
@@ -900,16 +925,14 @@ const GetAppointmentContent = () => {
                                                                     })
                                                                 )
                                                             }
-                                                            className={`px-3 py-2 rounded-md text-sm border transition ${
-                                                                appointmentForm.time ===
+                                                            className={`px-3 py-2 rounded-md text-sm border transition ${appointmentForm.time ===
                                                                 s
-                                                                    ? "bg-light-primary text-white border-light-primary"
-                                                                    : "bg-light-bg dark:bg-dark-surface text-light-primary-text dark:text-dark-primary-text border-light-secondary-text/20 dark:border-dark-secondary-text/20"
-                                                            } ${
-                                                                isBooking
+                                                                ? "bg-light-primary text-white border-light-primary"
+                                                                : "bg-light-bg dark:bg-dark-surface text-light-primary-text dark:text-dark-primary-text border-light-secondary-text/20 dark:border-dark-secondary-text/20"
+                                                                } ${isBooking
                                                                     ? "opacity-60 cursor-not-allowed"
                                                                     : "hover:opacity-90"
-                                                            }`}>
+                                                                }`}>
                                                             {s}
                                                         </button>
                                                     ))}
@@ -946,20 +969,117 @@ const GetAppointmentContent = () => {
                                                         type
                                                     )
                                                 }
-                                                className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold capitalize transition ${
-                                                    selected
-                                                        ? "border-transparent bg-light-primary text-white dark:bg-dark-primary"
-                                                        : "border-light-secondary-text/30 dark:border-dark-secondary-text/30 text-light-primary-text dark:text-dark-primary-text"
-                                                }`}>
+                                                className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold capitalize transition ${selected
+                                                    ? "border-transparent bg-light-primary text-white dark:bg-dark-primary"
+                                                    : "border-light-secondary-text/30 dark:border-dark-secondary-text/30 text-light-primary-text dark:text-dark-primary-text"
+                                                    }`}>
                                                 {type}
                                             </button>
                                         );
                                     })}
                                 </div>
                             </div>
-                            {/* Symptoms are now taken from the ML symptoms section at the top
-                                and synced into appointmentForm.symptoms, so we omit the
-                                duplicate symptom selection inside this booking modal. */}
+                            <div>
+                                <p className="text-sm font-medium text-light-primary-text dark:text-dark-primary-text">
+                                    Symptoms
+                                </p>
+                                <p className="text-xs text-light-secondary-text dark:text-dark-secondary-text">
+                                    Select common symptoms or add your own.
+                                </p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {COMMON_SYMPTOMS.map((symptom) => {
+                                        const active =
+                                            appointmentForm.symptoms.includes(
+                                                symptom
+                                            );
+                                        return (
+                                            <button
+                                                type="button"
+                                                key={symptom}
+                                                onClick={() =>
+                                                    active
+                                                        ? removeSymptom(symptom)
+                                                        : setAppointmentForm(
+                                                            (prev) => ({
+                                                                ...prev,
+                                                                symptoms: [
+                                                                    ...prev.symptoms,
+                                                                    symptom,
+                                                                ],
+                                                            })
+                                                        )
+                                                }
+                                                className={`rounded-full px-3 py-1 text-sm capitalize transition ${active
+                                                    ? "bg-light-primary text-white dark:bg-dark-primary"
+                                                    : "bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary"
+                                                    }`}>
+                                                {symptom}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <div className="mt-3 flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. fever, headache"
+                                        value={appointmentForm.symptomInput}
+                                        onChange={(e) =>
+                                            handleAppointmentFormChange(
+                                                "symptomInput",
+                                                e.target.value
+                                            )
+                                        }
+                                        onKeyDown={handleSymptomKeyDown}
+                                        className="flex-1 rounded-lg border border-light-secondary-text/20 dark:border-dark-secondary-text/20 bg-light-background dark:bg-dark-background px-3 py-2 text-light-primary-text dark:text-dark-primary-text focus:outline-none focus:ring-2 focus:ring-light-primary dark:focus:ring-dark-primary"
+                                    />
+                                    <button
+                                        onClick={handleAddSymptom}
+                                        className="inline-flex items-center gap-2 rounded-lg bg-light-primary px-4 py-2 text-white hover:bg-light-primary-dark dark:bg-dark-primary dark:hover:bg-dark-primary-dark">
+                                        <Plus className="h-4 w-4" />
+                                        Add
+                                    </button>
+                                </div>
+                                {appointmentForm.symptoms.length > 0 && (
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        {appointmentForm.symptoms.map(
+                                            (symptom) => (
+                                                <span
+                                                    key={symptom}
+                                                    className="inline-flex items-center gap-2 rounded-full bg-light-primary/10 px-3 py-1 text-sm text-light-primary dark:bg-dark-primary/20 dark:text-dark-primary">
+                                                    {symptom}
+                                                    <button
+                                                        onClick={() =>
+                                                            removeSymptom(
+                                                                symptom
+                                                            )
+                                                        }
+                                                        className="rounded-full p-1 hover:bg-light-primary/20 dark:hover:bg-dark-primary/20">
+                                                        <X className="h-3 w-3" />
+                                                    </button>
+                                                </span>
+                                            )
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-light-primary-text dark:text-dark-primary-text">
+                                    Reports / Previous Diagnosis (Optional)
+                                </p>
+                                <textarea
+                                    rows={3}
+                                    value={appointmentForm.reports}
+                                    onChange={(e) =>
+                                        handleAppointmentFormChange(
+                                            "reports",
+                                            e.target.value
+                                        )
+                                    }
+                                    className="mt-2 w-full rounded-lg border border-light-secondary-text/20 dark:border-dark-secondary-text/20 bg-light-background dark:bg-dark-background px-3 py-2 text-light-primary-text dark:text-dark-primary-text focus:outline-none focus:ring-2 focus:ring-light-primary dark:focus:ring-dark-primary"
+                                    placeholder="Share any important medical history, lab results, or recent observations."
+                                />
+                            </div>
+
                             <div className="col-span-full">
                                 <p
                                     htmlFor="patient-report"

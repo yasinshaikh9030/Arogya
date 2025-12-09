@@ -12,7 +12,7 @@ export default function Footer() {
                             src={"/aroga-logo.png"}
                             alt="Arogya Logo"
                             className="h-10 w-10"
-                        />  
+                        />
                         <span className="text-xl font-bold text-light-primary-text dark:text-dark-primary-text">
                             Arogya
                         </span>
@@ -22,46 +22,50 @@ export default function Footer() {
                     </p>
                 </div>
                 {/* Links */}
-                <div className="flex md:gap-24 gap-28">
+                <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-24">
                     <div className="flex flex-col gap-2 items-center">
                         <span className="font-semibold text-light-primary-text dark:text-dark-primary-text mb-1">
                             Product
                         </span>
-                        <a
-                            href="#features"
-                            className="hover:underline text-light-secondary-text dark:text-dark-secondary-text text-sm">
-                            Features
-                        </a>
-                        <a
-                            href="/pricing"
-                            className="hover:underline text-light-secondary-text dark:text-dark-secondary-text text-sm">
-                            Pricing
-                        </a>
-                        <a
-                            href="#faq"
-                            className="hover:underline text-light-secondary-text dark:text-dark-secondary-text text-sm">
-                            FAQ
-                        </a>
+                        <div className="flex flex-wrap justify-center gap-4 text-sm">
+                            <a
+                                href="#features"
+                                className="hover:underline text-light-secondary-text dark:text-dark-secondary-text">
+                                Features
+                            </a>
+                            <a
+                                href="/pricing"
+                                className="hover:underline text-light-secondary-text dark:text-dark-secondary-text">
+                                Pricing
+                            </a>
+                            <a
+                                href="#faq"
+                                className="hover:underline text-light-secondary-text dark:text-dark-secondary-text">
+                                FAQ
+                            </a>
+                        </div>
                     </div>
                     <div className="flex flex-col gap-2 items-center">
                         <span className="font-semibold text-light-primary-text dark:text-dark-primary-text mb-1">
                             Company
                         </span>
-                        <a
-                            href="/about-us"
-                            className="hover:underline text-light-secondary-text dark:text-dark-secondary-text text-sm">
-                            About Us
-                        </a>
-                        <a
-                            href="#"
-                            className="hover:underline text-light-secondary-text dark:text-dark-secondary-text text-sm">
-                            Privacy Policy
-                        </a>
-                        <a
-                            href="/terms"
-                            className="hover:underline text-light-secondary-text dark:text-dark-secondary-text text-sm">
-                            Terms of Service
-                        </a>
+                        <div className="flex flex-wrap justify-center gap-4 text-sm">
+                            <a
+                                href="/about-us"
+                                className="hover:underline text-light-secondary-text dark:text-dark-secondary-text">
+                                About Us
+                            </a>
+                            <a
+                                href="#"
+                                className="hover:underline text-light-secondary-text dark:text-dark-secondary-text">
+                                Privacy Policy
+                            </a>
+                            <a
+                                href="/terms"
+                                className="hover:underline text-light-secondary-text dark:text-dark-secondary-text">
+                                Terms of Service
+                            </a>
+                        </div>
                     </div>
                 </div>
                 {/* CTA */}

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import axios from "axios";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -43,6 +44,9 @@ export default function LeafletMap({
         latitude: initialLat,
         longitude: initialLng,
     });
+
+    const [geocodeLoading, setGeocodeLoading] = useState(false);
+    const [geocodeError, setGeocodeError] = useState("");
 
     // Sync when parent props change
     useEffect(() => {
@@ -152,6 +156,84 @@ export default function LeafletMap({
         });
     };
 
+    const handleUseCurrentLocationClick = () => {
+        if (!navigator.geolocation) {
+            alert("Geolocation is not supported by your browser.");
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const { latitude: lat, longitude: lng } = pos.coords;
+                console.log("[LeafletMap] use current location", { lat, lng });
+                updateFromCoords(lat, lng, false);
+            },
+            (err) => {
+                console.warn("[LeafletMap] unable to get current position", err);
+                alert(
+                    "Unable to get your current location. Please allow location access in your browser."
+                );
+            }
+        );
+    };
+
+    const handleLatitudeInputChange = (e) => {
+        const value = e.target.value;
+        const num = parseFloat(value);
+        if (!isNaN(num)) {
+            updateFromCoords(num, formData.longitude, false);
+        }
+    };
+
+    const handleLongitudeInputChange = (e) => {
+        const value = e.target.value;
+        const num = parseFloat(value);
+        if (!isNaN(num)) {
+            updateFromCoords(formData.latitude, num, false);
+        }
+    };
+
+    const handleGeocodeFromAddress = async () => {
+        if (!formData.address || !formData.address.trim()) return;
+
+        try {
+            setGeocodeLoading(true);
+            setGeocodeError("");
+
+            const res = await axios.get("https://nominatim.openstreetmap.org/search", {
+                params: {
+                    q: formData.address,
+                    format: "json",
+                    limit: 1,
+                },
+            });
+
+            const first =
+                Array.isArray(res.data) && res.data.length > 0 ? res.data[0] : null;
+
+            if (!first || !first.lat || !first.lon) {
+                setGeocodeError("Could not find coordinates for this address.");
+                return;
+            }
+
+            const lat = parseFloat(first.lat);
+            const lng = parseFloat(first.lon);
+
+            if (isNaN(lat) || isNaN(lng)) {
+                setGeocodeError("Invalid coordinates returned for this address.");
+                return;
+            }
+
+            console.log("[LeafletMap] geocoded address to", { lat, lng });
+            updateFromCoords(lat, lng, false);
+        } catch (err) {
+            console.error("[LeafletMap] geocode error", err);
+            setGeocodeError("Failed to look up coordinates for this address.");
+        } finally {
+            setGeocodeLoading(false);
+        }
+    };
+
     const handleSaveLocation = () => {
         if (!formData.name || !formData.address) {
             alert("Please fill in name and address before saving.");
@@ -253,8 +335,7 @@ export default function LeafletMap({
         map.current.setView([currentLocation.lat, currentLocation.lng]);
 
         marker.current.setPopupContent(
-            `<b>${formData.name || "Pharmacy"}</b><br />${formData.address || "No address set"
-            }`
+            `<b>${formData.name || "Pharmacy"}</b><br />${formData.address || "No address set"}`
         );
 
         if (marker.current.dragging) {
@@ -353,6 +434,23 @@ export default function LeafletMap({
                                 className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-dark-surface text-sm text-[var(--color-light-primary-text)] dark:text-[var(--color-dark-primary-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-light-primary)] dark:focus:ring-[var(--color-dark-primary)]"
                                 placeholder="Full address"
                             />
+                            <button
+                                type="button"
+                                onClick={handleGeocodeFromAddress}
+                                className="mt-2 px-3 py-1 text-xs rounded-md bg-[var(--color-light-primary)]/10 dark:bg-[var(--color-dark-primary)]/20 text-[var(--color-light-primary)] dark:text-[var(--color-dark-primary)] hover:bg-[var(--color-light-primary)]/20 dark:hover:bg-[var(--color-dark-primary)]/30"
+                            >
+                                Use address to update location
+                            </button>
+                            {geocodeLoading && (
+                                <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">
+                                    Looking up coordinates for this address...
+                                </p>
+                            )}
+                            {geocodeError && (
+                                <p className="mt-1 text-[10px] text-red-600 dark:text-red-400">
+                                    {geocodeError}
+                                </p>
+                            )}
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
@@ -363,8 +461,8 @@ export default function LeafletMap({
                                 <input
                                     type="text"
                                     value={formData.latitude.toFixed(6)}
-                                    readOnly
-                                    className="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-dark-surface text-xs text-gray-700 dark:text-[var(--color-dark-primary-text)]"
+                                    onChange={handleLatitudeInputChange}
+                                    className="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-dark-surface text-xs text-gray-700 dark:text-[var(--color-dark-primary-text)]"
                                 />
                             </div>
                             <div>
@@ -374,10 +472,20 @@ export default function LeafletMap({
                                 <input
                                     type="text"
                                     value={formData.longitude.toFixed(6)}
-                                    readOnly
-                                    className="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-dark-surface text-xs text-gray-700 dark:text-[var(--color-dark-primary-text)]"
+                                    onChange={handleLongitudeInputChange}
+                                    className="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-dark-surface text-xs text-gray-700 dark:text-[var(--color-dark-primary-text)]"
                                 />
                             </div>
+                        </div>
+
+                        <div className="flex justify-end">
+                            <button
+                                type="button"
+                                onClick={handleUseCurrentLocationClick}
+                                className="mt-1 px-3 py-1 text-xs rounded-md bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-[var(--color-dark-primary-text)] hover:bg-gray-50 dark:hover:bg-dark-surface"
+                            >
+                                Use Current Location
+                            </button>
                         </div>
 
                         <p className="text-xs text-gray-600 dark:text-gray-300 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-md px-3 py-2">
@@ -412,4 +520,3 @@ export default function LeafletMap({
         </div>
     );
 }
-

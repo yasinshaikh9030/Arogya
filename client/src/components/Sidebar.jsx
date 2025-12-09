@@ -3,11 +3,12 @@ import {
     PanelLeftClose,
     PanelLeftOpen,
     ChartColumnIncreasing,
+    Mic,
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
-const Sidebar = ({ tabs }) => {
+const Sidebar = ({ tabs, voiceEnabled = false, onToggleVoice }) => {
     const { user } = useUser();
     // Initialize isCollapsed from localStorage or default to false
     const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -37,10 +38,9 @@ const Sidebar = ({ tabs }) => {
             <div
                 className={`
                     fixed inset-0 z-40 bg-black/30 transition-opacity duration-1000
-                    ${
-                        isCollapsed
-                            ? "pointer-events-none opacity-0"
-                            : "pointer-events-auto opacity-100"
+                    ${isCollapsed
+                        ? "pointer-events-none opacity-0"
+                        : "pointer-events-auto opacity-100"
                     }
                     md:hidden
                 `}
@@ -51,21 +51,18 @@ const Sidebar = ({ tabs }) => {
             <aside
                 className={`
                     top-0 left-0 h-screen bg-light-surface dark:bg-dark-bg text-light-primary-text dark:text-dark-primary-text flex flex-col px-3 py-5 transition-all duration-300 ease-in-out z-50
-                    ${
-                        isCollapsed
-                            ? "w-0 overflow-hidden md:w-20 md:block hidden md:relative fixed"
-                            : "w-full fixed md:w-60 md:sticky md:left-0"
+                    ${isCollapsed
+                        ? "w-0 overflow-hidden md:w-20 md:block hidden md:relative fixed"
+                        : "w-full fixed md:w-60 md:sticky md:left-0"
                     }
                 `}
                 style={{ maxWidth: isCollapsed ? "200px" : "100vw" }}>
                 <div
-                    className={`flex px-2 ${
-                        isCollapsed ? "justify-center" : "justify-between"
-                    } items-center w-full`}>
+                    className={`flex px-2 ${isCollapsed ? "justify-center" : "justify-between"
+                        } items-center w-full`}>
                     <div
-                        className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                            isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
-                        }`}>
+                        className={`overflow-hidden transition-all duration-300 ease-in-out ${isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
+                            }`}>
                         <img
                             className="text-2xl font-semibold cursor-pointer whitespace-nowrap"
                             onClick={() => navigate("/")}
@@ -93,11 +90,10 @@ const Sidebar = ({ tabs }) => {
                         {tabs.map((tab) => (
                             <li
                                 key={tab.id}
-                                className={`cursor-pointer px-4 py-3 text-base rounded-lg transition-all duration-300 ease-in-out ${
-                                    getActiveTab() === tab.name
+                                className={`cursor-pointer px-4 py-3 text-base rounded-lg transition-all duration-300 ease-in-out ${getActiveTab() === tab.name
                                         ? "bg-light-primary/15 dark:bg-dark-primary/10 text-light-primary dark:text-dark-primary"
                                         : "hover:bg-light-hover dark:hover:bg-dark-hover"
-                                }`}
+                                    }`}
                                 onClick={() => {
                                     navigate(tab.path);
                                     if (window.innerWidth < 768)
@@ -106,16 +102,49 @@ const Sidebar = ({ tabs }) => {
                                 <div className="flex items-center">
                                     <tab.icon className="shrink-0" size={22} />
                                     <span
-                                        className={`ml-2 transition-all text-sm font-semibold duration-300 ease-in-out ${
-                                            isCollapsed
+                                        className={`ml-2 transition-all text-sm font-semibold duration-300 ease-in-out ${isCollapsed
                                                 ? "w-0 opacity-0"
                                                 : "w-auto opacity-100"
-                                        } whitespace-nowrap overflow-hidden`}>
+                                            } whitespace-nowrap overflow-hidden`}>
                                         {tab.name}
                                     </span>
                                 </div>
                             </li>
                         ))}
+                        {typeof onToggleVoice === "function" && (
+                            <li
+                                className={`mt-2 cursor-pointer px-4 py-3 text-base rounded-lg transition-all duration-300 ease-in-out hover:bg-light-hover dark:hover:bg-dark-hover`}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center">
+                                        <Mic className="shrink-0" size={22} />
+                                        <span
+                                            className={`ml-2 transition-all text-sm font-semibold duration-300 ease-in-out ${isCollapsed
+                                                    ? "w-0 opacity-0"
+                                                    : "w-auto opacity-100"
+                                                } whitespace-nowrap overflow-hidden`}
+                                        >
+                                            Voice Navigator
+                                        </span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={onToggleVoice}
+                                        className={`ml-3 flex items-center justify-center w-8 h-8 rounded-full border transition-colors duration-200 ${voiceEnabled
+                                                ? "bg-light-primary dark:bg-dark-primary border-light-primary text-white"
+                                                : "bg-transparent border-light-border dark:border-dark-border text-light-secondary-text dark:text-dark-secondary-text"
+                                            }`}
+                                    >
+                                        <span
+                                            className={`block w-2.5 h-2.5 rounded-full ${voiceEnabled
+                                                    ? "bg-white"
+                                                    : "bg-light-secondary-text/60 dark:bg-dark-secondary-text/60"
+                                                }`}
+                                        />
+                                    </button>
+                                </div>
+                            </li>
+                        )}
                     </ul>
                 </nav>
 

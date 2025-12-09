@@ -63,7 +63,7 @@ iframe.goog-te-banner-frame.skiptranslate,
   display: none !important;
 }
 
-body > .skiptranslate {
+body>.skiptranslate {
   display: none !important;
 }
 
@@ -83,4 +83,44 @@ body {
 .goog-text-highlight {
   background: none !important;
   box-shadow: none !important;
+}
+
+:root.colorblind {
+  --color-light-bg: #f7f7f7;
+  --color-light-surface: #ffffff;
+  --color-light-primary-text: #000000;
+  --color-light-secondary-text: #333333;
+
+  --color-light-primary: #0072b2;
+  --color-light-primary-hover: #005a8c;
+
+  --color-light-secondary: #e69f00;
+  --color-light-secondary-hover: #c07f00;
+
+  --color-light-success: #009e73;
+  --color-light-success-hover: #007a59;
+
+  --color-light-fail: #cc79a7;
+  --color-light-fail-hover: #b35f8f;
+
+  --scrollbar-thumb: var(--color-light-surface);
+  --scrollbar-thumb-hover: #56b4e9;
+}
+
+:root.colorblind body {
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+:root.colorblind button,
+:root.colorblind [role="button"] {
+  font-size: 16px;
+  line-height: 1.5;
+  min-height: 44px;
+  border-width: 2px;
+}
+
+:root.colorblind svg {
+  width: 24px;
+  height: 24px;
 }
